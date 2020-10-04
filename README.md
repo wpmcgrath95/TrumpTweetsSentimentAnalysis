@@ -1,4 +1,4 @@
-# PythonProject
+# Analyzing Tweets Using Sentiment Analysis 
 
 # Setup for developement:
 
