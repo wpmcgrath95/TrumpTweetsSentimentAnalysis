@@ -1,4 +1,4 @@
-# Analyzing Tweets Using Sentiment Analysis 
+# Analyzing Trump Tweets Using Sentiment Analysis 
 
 # Setup for developement:
 
