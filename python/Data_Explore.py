@@ -7,6 +7,6 @@ fdt = pd.read_csv(url,sep=',')
 print(fdt.head())
 
 # Load the sentiment library
-url2 = 'https://github.com/wpmcgrath95/TrumpTweetsSentimentAnalysis/blob/data_and_feat_engineering/data/SentiWords_1.1.txt?raw=true'
+url2 = 'https://github.com/wpmcgrath95/TrumpTweetsSentimentAnalysis/blob/data_and_feat_engineering/data/sentLib.csv?raw=true'
 sentlib = pd.read_csv(url2,sep=',')  
 print(sentlib.head())
