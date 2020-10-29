@@ -19,12 +19,6 @@ def main():
     # Convert sentiment library to dictionary 
     sent = dict(zip(sentlib.Lemma, sentlib.prior_polarity_score))
 
-    # Calculate polarity for each tweet (THIS IS WRONG)
-    for row in fdt['content']:
-        if any((word in row) for word in sent):
-            fdt['polarity'] = mean(sent.values()) # need to find how to average for each row.. right now it's averaging for whole dataset
-    print(fdt.head())
-
 if __name__ == "__main__":
     sys.exit(main())
 
