@@ -1,7 +1,6 @@
 # Import Libraries
 import sys
 import pandas as pd
-from statistics import mean
 
 def main():
     # Load the trump tweets directly from repository
@@ -15,9 +14,13 @@ def main():
 
     # Split on '#' symbol to isolate sentiment words
     sentlib[['Lemma','PoS']] = sentlib["# lemma#PoS"].str.split("#", 1, expand=True)
-  
+ 
     # Convert sentiment library to dictionary 
     sent = dict(zip(sentlib.Lemma, sentlib.prior_polarity_score))
+
+    fdt_split = fdt['content'].str.split()
+    print(fdt_split)
+
 
 if __name__ == "__main__":
     sys.exit(main())
