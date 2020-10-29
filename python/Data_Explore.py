@@ -1,6 +1,7 @@
 # Import Libraries
 import sys
 import pandas as pd
+from statistics import mean
 
 def main():
     # Load the trump tweets directly from repository
@@ -21,8 +22,8 @@ def main():
     # Calculate polarity for each tweet (THIS IS WRONG)
     for row in fdt['content']:
         if any((word in row) for word in sent):
-            fdt['polarity'] = sum(sent)
-
+            fdt['polarity'] = mean(sent.values()) # need to find how to average for each row.. right now it's averaging for whole dataset
+    print(fdt.head())
 
 if __name__ == "__main__":
     sys.exit(main())
