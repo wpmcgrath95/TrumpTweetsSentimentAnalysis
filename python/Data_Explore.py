@@ -1,7 +1,7 @@
 # Import Libraries
 import sys
 import pandas as pd
-import numpy as np
+from statistics import mean
 
 def main():
 
@@ -23,20 +23,11 @@ def main():
     fdt2 = fdt['content'].str.lower()
 
     # Convert to seperate words
-    fdt_split = fdt2.str.split(expand=True)
+    fdt_split = fdt2.str.split()
+    print(fdt_split.head())
 
     # Calculate average polarity for each tweet
-    polarity = np.zeros(shape=(43352,1))
-    for row in fdt_split:
-        for word in fdt_split[row]:
-            if word in sent:
-                word = sent[word]
-                polarity[row] += word
-            else:
-                word = 0.0
-                polarity[row] += word
-        fdt['polarity'] = polarity[:]
-    print(fdt.head())
+    # ?
 
 if __name__ == "__main__":
     sys.exit(main())
