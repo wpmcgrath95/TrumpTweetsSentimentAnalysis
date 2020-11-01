@@ -1,7 +1,6 @@
 # Import Libraries
 import sys
 import pandas as pd
-from statistics import mean
 
 def main():
 
@@ -27,7 +26,22 @@ def main():
     print(fdt_split.head())
 
     # Calculate average polarity for each tweet
-    # ?
+    for i,row in fdt_split.iteritems():
+        runTotal = 0.0
+        itemCount = 0
+        for item in row:
+            if item in sent:
+                item = sent[item]
+                runTotal += item
+                itemCount += 1
+            else:
+                item = sent['google']
+                runTotal += item
+                itemCount += 1
+        fdt['polarity'] = runTotal / itemCount
+    print(fdt.head()) 
+    print(fdt['content'].mean())        
+
 
 if __name__ == "__main__":
     sys.exit(main())
