@@ -1,6 +1,7 @@
 # Import Libraries
 import sys
 import pandas as pd
+import numpy as np
 
 def main():
 
@@ -26,6 +27,7 @@ def main():
     print(fdt_split.head())
 
     # Calculate average polarity for each tweet
+    Polarity = np.zeros((43300, 1))
     for i,row in fdt_split.iteritems():
         runTotal = 0.0
         itemCount = 0
@@ -38,10 +40,10 @@ def main():
                 item = sent['google']
                 runTotal += item
                 itemCount += 1
-        fdt['polarity'] = runTotal / itemCount
-    print(fdt.head()) 
-    print(fdt['polarity'].mean())        
+        np.append(Polarity[row],(runTotal / itemCount))
 
+    print(fdt.head()) 
+    print(Polarity)        
 
 if __name__ == "__main__":
     sys.exit(main())
