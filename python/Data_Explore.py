@@ -40,7 +40,7 @@ def main():
                 itemCount += 1
         fdt['polarity'] = runTotal / itemCount
     print(fdt.head()) 
-    print(fdt['content'].mean())        
+    print(fdt['polarity'].mean())        
 
 
 if __name__ == "__main__":
