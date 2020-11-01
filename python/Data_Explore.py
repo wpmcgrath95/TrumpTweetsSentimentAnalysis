@@ -27,7 +27,6 @@ def main():
     print(fdt_split.head())
 
     # Calculate average polarity for each tweet
-    Polarity = np.zeros((43300, 1))
     for i,row in fdt_split.iteritems():
         runTotal = 0.0
         itemCount = 0
@@ -40,10 +39,11 @@ def main():
                 item = sent['google']
                 runTotal += item
                 itemCount += 1
-        np.append(Polarity[row],(runTotal / itemCount))
+        sub = runTotal / itemCount
+        fdt['polarity'] = sub
 
     print(fdt.head()) 
-    print(Polarity)        
+    print(fdt['polarity'].mean())        
 
 if __name__ == "__main__":
     sys.exit(main())
