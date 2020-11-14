@@ -77,7 +77,7 @@ class SentimentOfTweets(object):
         #print(self.tweets_df['target'].value_counts())
 
         # test TextBlob
-        wiki = TextBlob("Suck a dick")
+        wiki = TextBlob("test")
         print(wiki.sentiment)
 
 if __name__ == "__main__":
