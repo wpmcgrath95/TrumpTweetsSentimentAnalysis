@@ -10,6 +10,8 @@ class SentimentOfTweets(object):
         self.tweets_df = pd.read_csv(TWEETS_URL,sep=',')
     
     def main(self):
+        # spell check words
+        self.tweets_df['content'] = self.tweets_df['content'].apply(lambda tweet: TextBlob(tweet).correct())
         # get polarity of each tweet
         self.tweets_df['polarity_score'] = self.tweets_df['content'].apply(lambda tweet: TextBlob(tweet).sentiment[0])
         print(self.tweets_df.head(50))
