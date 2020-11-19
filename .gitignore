@@ -9,6 +9,9 @@ __pycache__/
 *$py.class
 .vscode/*
 
+# env
+test_env/*
+
 # C extensions
 *.so
 

@@ -1,7 +1,0 @@
-{
-  "files.watcherExclude": {
-    "**/.venv": true
-  },
-  "python.pythonPath": "/usr/bin/python3",
-  "python.terminal.activateEnvironment": true
-}
