@@ -2,15 +2,16 @@ import sys
 import pandas as pd
 import numpy as np
 import math
+import os
 from textblob import TextBlob
-
-TWEETS_URL = 'https://github.com/wpmcgrath95/TrumpTweetsSentimentAnalysis/blob/data_and_feat_engineering/data/realdonaldtrump.csv?raw=true'
-SENTIMENT_URL = 'https://github.com/wpmcgrath95/TrumpTweetsSentimentAnalysis/blob/data_and_feat_engineering/data/sentLib.csv?raw=true'
 
 class SentimentOfTweets(object):
     def __init__(self):
         # load the trump tweets directly from repository
-        self.tweets_df = pd.read_csv(TWEETS_URL,sep=',')
+        this_dir = os.path.dirname(os.path.realpath(__file__))
+        trump_data_dir = os.path.join(this_dir, "../data/realdonaldtrump.csv")
+        sentiment_data_dir = os.path.join(this_dir, "../data/sentLib.csv")
+        self.tweets_df = pd.read_csv(trump_data_dir,sep=',')
         
         # self.polarity = poloarity
 
