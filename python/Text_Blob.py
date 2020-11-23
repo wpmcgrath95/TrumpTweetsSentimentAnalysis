@@ -26,9 +26,12 @@ class SentimentOfTweets(object):
             return np.nan
 
     def feature_engineering(self):
-        # get subjectivity of each tweet (measure of opinion vs non-opinion, 1=opinion and 0=fact)
+        # feature 1: subjectivity (opinion vs non-opinion, 1=opinion and 0=fact)
         self.tweets_df['subjectivity_score'] = self.tweets_df['content'].apply(
             lambda tweet: TextBlob(tweet).sentiment[1])
+        # feature 2: day of the week (Monday, Tuesday, etc.) 
+        self.tweets_df['date'] = pd.to_datetime(self.tweets_df.date, format='%Y-%m-%d %H:%M:%S')
+        self.tweets_df['day_of_week'] = self.tweets_df['date'].dt.day_name()
 
         return None
 
