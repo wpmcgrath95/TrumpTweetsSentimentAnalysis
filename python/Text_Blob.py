@@ -37,7 +37,17 @@ class SentimentOfTweets(object):
         # feature 3: MAGA count
         self.tweets_df['MAGA_count'] = self.tweets_df['content'].apply(lambda tweet:TextBlob(tweet).words.count('MAGA'))
 
-        #
+        # feature 4: word count
+        self.tweets_df['word_count'] = self.tweets_df['content'].apply(lambda tweet: len(tweet.split()))
+
+        # feature 5: character count
+        self.tweets_df['character_count'] = self.tweets_df['content'].apply(lambda tweet: len(tweet))
+
+        # feature 6: elapsed time (time since last tweet)
+        position = self.tweets_df.columns.get_loc('date')
+        self.tweets_df['elapsed_time'] = self.tweets_df.iloc[1:,position]-self.tweets_df.iat[0,position]
+        self.tweets_df['elapsed_time'] = self.tweets_df.elapsed_time.dt.total_seconds()
+
 
 
         return None
@@ -57,8 +67,9 @@ class SentimentOfTweets(object):
         self.tweets_df['target'] = self.tweets_df['polarity_score'].apply(self.to_sentiment)
 
 
-        
 
+
+    
         print(self.tweets_df.head(25))
         print(self.tweets_df['target'].value_counts())
 
