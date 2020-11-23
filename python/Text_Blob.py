@@ -26,12 +26,19 @@ class SentimentOfTweets(object):
             return np.nan
 
     def feature_engineering(self):
-        # feature 1: subjectivity (opinion vs non-opinion, 1=opinion and 0=fact)
+        # feature 1: subjectivity score (opinion vs non-opinion, 1=opinion and 0=fact)
         self.tweets_df['subjectivity_score'] = self.tweets_df['content'].apply(
             lambda tweet: TextBlob(tweet).sentiment[1])
-        # feature 2: day of the week (Monday, Tuesday, etc.) 
+
+        # feature 2: day of week (Monday, Tuesday, etc.) 
         self.tweets_df['date'] = pd.to_datetime(self.tweets_df.date, format='%Y-%m-%d %H:%M:%S')
         self.tweets_df['day_of_week'] = self.tweets_df['date'].dt.day_name()
+
+        # feature 3: MAGA count
+        self.tweets_df['MAGA_count'] = self.tweets_df['content'].apply(lambda tweet:TextBlob(tweet).words.count('MAGA'))
+
+        #
+
 
         return None
 
@@ -48,7 +55,10 @@ class SentimentOfTweets(object):
 
         # set target column
         self.tweets_df['target'] = self.tweets_df['polarity_score'].apply(self.to_sentiment)
+
+
         
+
         print(self.tweets_df.head(25))
         print(self.tweets_df['target'].value_counts())
 
