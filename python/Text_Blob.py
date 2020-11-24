@@ -1,17 +1,19 @@
-import sys
-import pandas as pd
 import math
-import numpy as np
 import os
+import sys
+
+import numpy as np
+import pandas as pd
 from textblob import TextBlob
+
 
 class SentimentOfTweets(object):
     def __init__(self):
         # load the trump tweets directly from repository
         this_dir = os.path.dirname(os.path.realpath(__file__))
         data_dir = os.path.join(this_dir, "../data/realdonaldtrump.csv")
-        self.tweets_df = pd.read_csv(data_dir,sep=',')
-    
+        self.tweets_df = pd.read_csv(data_dir, sep=",")
+
     def to_sentiment(self, polarity):
         # set target variable based on average polarity score with 3 rules
         polarity = np.round(polarity, 2)
@@ -26,29 +28,40 @@ class SentimentOfTweets(object):
             return np.nan
 
     def feature_engineering(self):
-        # feature 1: subjectivity score (opinion vs non-opinion, 1=opinion and 0=fact)
-        self.tweets_df['subjectivity_score'] = self.tweets_df['content'].apply(
-            lambda tweet: TextBlob(tweet).sentiment[1])
+        # feat 1: subjectivity score - opinion vs non-opinion
+        # i.e. 1=opinion and 0=fact
+        self.tweets_df["subjectivity_score"] = self.tweets_df["content"].apply(
+            lambda tweet: TextBlob(tweet).sentiment[1]
+        )
 
-        # feature 2: day of week (Monday, Tuesday, etc.) 
-        self.tweets_df['date'] = pd.to_datetime(self.tweets_df.date, format='%Y-%m-%d %H:%M:%S')
-        self.tweets_df['day_of_week'] = self.tweets_df['date'].dt.day_name()
+        # feat 2: day of week (Monday, Tuesday, etc.)
+        self.tweets_df["date"] = pd.to_datetime(
+            self.tweets_df.date, format="%Y-%m-%d %H:%M:%S"
+        )
+        self.tweets_df["day_of_week"] = self.tweets_df["date"].dt.day_name()
 
-        # feature 3: MAGA count
-        self.tweets_df['MAGA_count'] = self.tweets_df['content'].apply(lambda tweet:TextBlob(tweet).words.count('MAGA'))
+        # feat 3: MAGA count
+        self.tweets_df["MAGA_count"] = self.tweets_df["content"].apply(
+            lambda tweet: TextBlob(tweet).words.count("MAGA")
+        )
 
-        # feature 4: word count
-        self.tweets_df['word_count'] = self.tweets_df['content'].apply(lambda tweet: len(tweet.split()))
+        # feat 4: word count
+        self.tweets_df["word_count"] = self.tweets_df["content"].apply(
+            lambda tweet: len(tweet.split())
+        )
 
-        # feature 5: character count
-        self.tweets_df['character_count'] = self.tweets_df['content'].apply(lambda tweet: len(tweet))
+        # feat 5: character count
+        self.tweets_df["character_count"] = self.tweets_df["content"].apply(
+            lambda tweet: len(tweet)
+        )
 
-        # feature 6: elapsed time (time since last tweet)
-        position = self.tweets_df.columns.get_loc('date')
-        self.tweets_df['elapsed_time'] = self.tweets_df.iloc[1:,position]-self.tweets_df.iat[0,position]
-        self.tweets_df['elapsed_time'] = self.tweets_df.elapsed_time.dt.total_seconds()
-
-
+        # feat 6: elapsed time (time since last tweet)
+        position = self.tweets_df.columns.get_loc("date")
+        self.tweets_df["elapsed_time"] = (
+            self.tweets_df.iloc[1:, position] - self.tweets_df.iat[0, position]
+        )
+        elapsed_col = self.tweets_df.elapsed_time
+        self.tweets_df["elapsed_time"] = elapsed_col.dt.total_seconds()
 
         return None
 
@@ -57,21 +70,23 @@ class SentimentOfTweets(object):
         pass
 
     def main(self):
-        # spell check words (takes a long time to run..)
-        # self.tweets_df['content'] = self.tweets_df['content'].apply(lambda tweet: TextBlob(tweet).correct())
+        # spell check words in each tweet or row (takes a long time to run..)
+        # self.tweets_df["crt_spell"]=self.tweets_df["content"].apply(lambda t:
+        # TextBlob(t).correct())
 
         # get polarity of each tweet
-        self.tweets_df['polarity_score'] = self.tweets_df['content'].apply(lambda tweet:TextBlob(tweet).sentiment[0])
+        self.tweets_df["polarity_score"] = self.tweets_df["content"].apply(
+            lambda tweet: TextBlob(tweet).sentiment[0]
+        )
 
         # set target column
-        self.tweets_df['target'] = self.tweets_df['polarity_score'].apply(self.to_sentiment)
+        self.tweets_df["target"] = self.tweets_df["polarity_score"].apply(
+            self.to_sentiment
+        )
 
-
-
-
-    
         print(self.tweets_df.head(25))
-        print(self.tweets_df['target'].value_counts())
+        print(self.tweets_df["target"].value_counts())
+
 
 if __name__ == "__main__":
     sys.exit(SentimentOfTweets().main())
