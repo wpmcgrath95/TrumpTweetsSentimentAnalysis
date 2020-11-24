@@ -63,7 +63,7 @@ class LDAGrouping(object):
         # join different processed tweets together
         long_string = ",".join(list(self.tweets_df["content_pro"].values))
 
-        # Create a WordCloud object
+        # create a WordCloud object
         word_cloud = WordCloud(
             background_color="white",
             max_words=5000,
@@ -71,7 +71,7 @@ class LDAGrouping(object):
             contour_color="steelblue",
         )
 
-        # Generate a word cloud
+        # generate a word cloud
         word_cloud.generate(long_string)
 
         # save word cloud as a png file
