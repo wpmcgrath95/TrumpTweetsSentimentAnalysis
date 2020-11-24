@@ -1,6 +1,9 @@
 import os
 
+import numpy as np
 import pandas as pd
+
+np.random.seed(2)
 
 
 # add LDA model to group Tweets and add it as a feature

@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from textblob import TextBlob
 
+np.random.seed(1)
+
 
 class SentimentOfTweets(object):
     def __init__(self):
