@@ -1,5 +1,4 @@
 numpy
 textblob
 pandas
-gensim
-nltk
+wordcloud

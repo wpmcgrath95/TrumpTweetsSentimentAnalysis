@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import math
 import os
 import sys
@@ -12,8 +13,8 @@ np.random.seed(1)
 class SentimentOfTweets(object):
     def __init__(self):
         # load the trump tweets directly from repository
-        this_dir = os.path.dirname(os.path.realpath(__file__))
-        data_dir = os.path.join(this_dir, "../data/realdonaldtrump.csv")
+        self.this_dir = os.path.dirname(os.path.realpath(__file__))
+        data_dir = os.path.join(self.this_dir, "../data/realdonaldtrump.csv")
         self.tweets_df = pd.read_csv(data_dir, sep=",")
 
     def to_sentiment(self, polarity):
