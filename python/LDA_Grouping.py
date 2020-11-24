@@ -75,7 +75,7 @@ class LDAGrouping(object):
         word_cloud.generate(long_string)
 
         # save word cloud as a png file
-        word_cloud_img = os.path.join(self.this_dir, "../data/word_cloud.png")
+        word_cloud_img = os.path.join(self.this_dir, "../plots/word_cloud.png")
         word_cloud.to_file(word_cloud_img)
 
         return None
