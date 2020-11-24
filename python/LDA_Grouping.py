@@ -7,8 +7,6 @@ import numpy as np
 import pandas as pd
 from wordcloud import WordCloud
 
-np.random.seed(2)
-
 
 # add LDA model to group Tweets and add it as a feature
 class LDAGrouping(object):
@@ -83,6 +81,8 @@ class LDAGrouping(object):
         return None
 
     def main(self):
+        np.random.seed(2)
+
         self.process_tweet()
         print(self.tweets_df["content_pro"])
 

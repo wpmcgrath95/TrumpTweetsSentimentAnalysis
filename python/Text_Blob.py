@@ -7,8 +7,6 @@ import numpy as np
 import pandas as pd
 from textblob import TextBlob
 
-np.random.seed(1)
-
 
 class SentimentOfTweets(object):
     def __init__(self):
@@ -73,6 +71,7 @@ class SentimentOfTweets(object):
         pass
 
     def main(self):
+        np.random.seed(1)
         # spell check words in each tweet or row (takes a long time to run..)
         # self.tweets_df["crt_spell"]=self.tweets_df["content"].apply(lambda t:
         # TextBlob(t).correct())
