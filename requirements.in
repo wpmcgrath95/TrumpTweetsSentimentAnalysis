@@ -2,3 +2,7 @@ numpy
 textblob
 pandas
 wordcloud
+sklearn
+matplotlib
+seaborn
+pyLDAvis

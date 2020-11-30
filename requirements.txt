@@ -4,20 +4,39 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
+attrs==20.3.0             # via pytest
 click==7.1.2              # via nltk
 cycler==0.10.0            # via matplotlib
-joblib==0.17.0            # via nltk
+funcy==1.15               # via pyldavis
+future==0.18.2            # via pyldavis
+iniconfig==1.1.1          # via pytest
+jinja2==2.11.2            # via pyldavis
+joblib==0.17.0            # via nltk, pyldavis, scikit-learn
 kiwisolver==1.3.1         # via matplotlib
-matplotlib==3.3.3         # via wordcloud
+markupsafe==1.1.1         # via jinja2
+matplotlib==3.3.3         # via -r requirements.in, seaborn, wordcloud
 nltk==3.5                 # via textblob
-numpy==1.18.4             # via -r requirements.in, matplotlib, pandas, wordcloud
-pandas==1.1.4             # via -r requirements.in
+numexpr==2.7.1            # via pyldavis
+numpy==1.18.4             # via -r requirements.in, matplotlib, numexpr, pandas, pyldavis, scikit-learn, scipy, seaborn, wordcloud
+packaging==20.7           # via pytest
+pandas==1.1.4             # via -r requirements.in, pyldavis, seaborn
 pillow==8.0.1             # via matplotlib, wordcloud
-pyparsing==2.4.7          # via matplotlib
+pluggy==0.13.1            # via pytest
+py==1.9.0                 # via pytest
+pyldavis==2.1.2           # via -r requirements.in
+pyparsing==2.4.7          # via matplotlib, packaging
+pytest==6.1.2             # via pyldavis
 python-dateutil==2.8.1    # via matplotlib, pandas
 pytz==2020.4              # via pandas
 regex==2020.11.13         # via nltk
-six==1.15.0               # via python-dateutil
+scikit-learn==0.23.2      # via sklearn
+scipy==1.5.4              # via pyldavis, scikit-learn, seaborn
+seaborn==0.11.0           # via -r requirements.in
+six==1.15.0               # via cycler, python-dateutil
+sklearn==0.0              # via -r requirements.in
 textblob==0.15.3          # via -r requirements.in
+threadpoolctl==2.1.0      # via scikit-learn
+toml==0.10.2              # via pytest
 tqdm==4.51.0              # via nltk
+wheel==0.35.1             # via pyldavis
 wordcloud==1.8.1          # via -r requirements.in

@@ -2,9 +2,11 @@
 import math
 import os
 import sys
+import webbrowser
 
 import numpy as np
 import pandas as pd
+from LDA_Grouping import LDAGrouping
 from textblob import TextBlob
 
 
@@ -15,11 +17,29 @@ class SentimentOfTweets(object):
         data_dir = os.path.join(self.this_dir, "../data/realdonaldtrump.csv")
         self.tweets_df = pd.read_csv(data_dir, sep=",")
 
+    @staticmethod
+    def print_heading(title: str) -> str:
+        # creates headers to divide outputs
+        print("\n")
+        print("*" * 90)
+        print(title)
+        print("*" * 90)
+
+        return None
+
     def to_sentiment(self, polarity):
         # set target variable based on average polarity score with 3 rules
+        # 1. choose 100 random tweets and label them
+        # 2. build a model on those 100 random tweets
+        # 3. use this model to predict the rest of the tweets and
+        # 4. check to see the ones that were scored well so check ones
+        # that scored 1 or 0 and some in the middle, and label those.
+        # 400 or more labeled
+        # 5 build model on prev stuff and make that ground truth for unsup model
+        # 6. then use unsupervised model (k-means) and check perf of ones you labeled
         polarity = np.round(polarity, 2)
         if not math.isnan(polarity):
-            if polarity >= -1 and polarity <= -0.34:
+            if polarity >= -1 and polarity <= -0.33:
                 return -1
             elif polarity > -0.33 and polarity <= 0.33:
                 return 0
@@ -71,6 +91,7 @@ class SentimentOfTweets(object):
         pass
 
     def main(self):
+        # set seed
         np.random.seed(1)
         # spell check words in each tweet or row (takes a long time to run..)
         # self.tweets_df["crt_spell"]=self.tweets_df["content"].apply(lambda t:
@@ -88,6 +109,10 @@ class SentimentOfTweets(object):
 
         print(self.tweets_df.head(25))
         print(self.tweets_df["target"].value_counts())
+
+        # opens LDAvis_prepared data
+        LDAvis_prep_html_path = LDAGrouping().main()
+        webbrowser.open("file://" + os.path.realpath(LDAvis_prep_html_path + ".html"))
 
 
 if __name__ == "__main__":
