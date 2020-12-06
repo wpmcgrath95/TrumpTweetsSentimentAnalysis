@@ -67,7 +67,7 @@ class LDAGrouping(object):
             lambda x: x.replace('"', "")
         )
 
-        return self.tweets_df["content_pro"]
+        return None
 
     def word_cloud(self):
         # join different processed tweets together
@@ -139,7 +139,7 @@ class LDAGrouping(object):
         np.random.seed(2)
 
         # processed data
-        self.tweets_df["content_pro"] = self.process_tweet()
+        self.process_tweet()
 
         # word cloud
         self.word_cloud()
@@ -179,7 +179,7 @@ class LDAGrouping(object):
             pyLDAvis.save_html(LDAvis_prep, LDAvis_prep_html_path + ".html")
 
         # returns interactive plot, groups, and 10 most common words
-        return LDAvis_prep_html_path, most_com_words
+        return self.tweets_df["content_pro"], LDAvis_prep_html_path, most_com_words
 
 
 if __name__ == "__main__":
