@@ -35,7 +35,9 @@ class SentimentOfTweets(object):
         # load the trump tweets directly from repository
         self.this_dir = os.path.dirname(os.path.realpath(__file__))
         data_dir = os.path.join(self.this_dir, "../data/realdonaldtrump.csv")
+
         self.tweets_df = pd.read_csv(data_dir, sep=",")
+        # self.tweets_df['processed_content'] =
 
     @staticmethod
     def print_heading(title: str) -> str:
@@ -57,6 +59,7 @@ class SentimentOfTweets(object):
         return overall_cnt
 
     def to_sentiment(self, polarity):
+        # target column (determine sentiment based on other model)
         """
         polarity = np.round(polarity, 2
         if not math.isnan(polarity):
@@ -142,7 +145,7 @@ class SentimentOfTweets(object):
             lambda tweet: TextBlob(tweet).sentiment[0]
         )
 
-        # response var: target column (determine sentiment based on other model)
+        # response var
         self.tweets_df["target"] = self.tweets_df["polarity_score"].apply(
             self.to_sentiment
         )

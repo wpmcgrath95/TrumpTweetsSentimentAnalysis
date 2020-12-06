@@ -67,7 +67,7 @@ class LDAGrouping(object):
             lambda x: x.replace('"', "")
         )
 
-        return None
+        return self.tweets_df["content_pro"]
 
     def word_cloud(self):
         # join different processed tweets together
@@ -139,7 +139,7 @@ class LDAGrouping(object):
         np.random.seed(2)
 
         # processed data
-        self.process_tweet()
+        self.tweets_df["content_pro"] = self.process_tweet()
 
         # word cloud
         self.word_cloud()
