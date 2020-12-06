@@ -1,5 +1,25 @@
 #!/usr/bin/env python3
-import math
+# BDA 696 Final Project
+# Create by: Will McGrath
+
+"""
+Input: Donald Trump Tweets
+
+Description:
+    set target variable based on average polarity score with 3 rules
+    1. choose 100 random tweets and label them
+    2. build a model on those 100 random tweets
+    3. use this model to predict the rest of the tweets and
+    4. check to see the ones that were scored well so check ones
+        that scored 1 or 0 and some in the middle, and label those.
+        400 or more labeled
+    5. build model on prev stuff and make that ground truth for unsup model
+    6. try transforming data like box-cox to improve performance
+    7. then use PCA
+    8. then unsupervised model (k-means) and check perf of ones you labeled
+
+Output: Docker file that can ran with sentiement of Tweets
+"""
 import os
 import sys
 import webbrowser
@@ -27,17 +47,18 @@ class SentimentOfTweets(object):
 
         return None
 
+    @staticmethod
+    def get_count(most_com_words: list, tweet: str) -> int:
+        overall_cnt = 0
+        for word in most_com_words:
+            word_cnt = TextBlob(tweet).words.count(word)
+            overall_cnt = overall_cnt + word_cnt
+
+        return overall_cnt
+
     def to_sentiment(self, polarity):
-        # set target variable based on average polarity score with 3 rules
-        # 1. choose 100 random tweets and label them
-        # 2. build a model on those 100 random tweets
-        # 3. use this model to predict the rest of the tweets and
-        # 4. check to see the ones that were scored well so check ones
-        # that scored 1 or 0 and some in the middle, and label those.
-        # 400 or more labeled
-        # 5 build model on prev stuff and make that ground truth for unsup model
-        # 6. then use unsupervised model (k-means) and check perf of ones you labeled
-        polarity = np.round(polarity, 2)
+        """
+        polarity = np.round(polarity, 2
         if not math.isnan(polarity):
             if polarity >= -1 and polarity <= -0.33:
                 return -1
@@ -47,6 +68,8 @@ class SentimentOfTweets(object):
                 return 1
         else:
             return np.nan
+        """
+        pass
 
     def feature_engineering(self):
         # feat 1: subjectivity score - opinion vs non-opinion
@@ -84,10 +107,24 @@ class SentimentOfTweets(object):
         elapsed_col = self.tweets_df.elapsed_time
         self.tweets_df["elapsed_time"] = elapsed_col.dt.total_seconds()
 
-        return None
+        # import LDA model
+        LDAvis_prep_html_path, most_com_words = LDAGrouping().main()
+
+        # feat 7: get how many of the 10 most common words are in tweet
+        self.tweets_df["com_word_cnt"] = self.tweets_df["content"].apply(
+            lambda tweet: self.get_count(most_com_words, tweet)
+        )
+
+        return LDAvis_prep_html_path
 
     def upsample(self):
         # upsample class distribution
+        pass
+
+    def train(self):
+        pass
+
+    def pipeline(self):
         pass
 
     def main(self):
@@ -97,12 +134,15 @@ class SentimentOfTweets(object):
         # self.tweets_df["crt_spell"]=self.tweets_df["content"].apply(lambda t:
         # TextBlob(t).correct())
 
+        # add features to tweets_df
+        LDAvis_prep_html_path = self.feature_engineering()
+
         # get polarity of each tweet
         self.tweets_df["polarity_score"] = self.tweets_df["content"].apply(
             lambda tweet: TextBlob(tweet).sentiment[0]
         )
 
-        # set target column
+        # response var: target column (determine sentiment based on other model)
         self.tweets_df["target"] = self.tweets_df["polarity_score"].apply(
             self.to_sentiment
         )
@@ -111,8 +151,9 @@ class SentimentOfTweets(object):
         print(self.tweets_df["target"].value_counts())
 
         # opens LDAvis_prepared data
-        LDAvis_prep_html_path = LDAGrouping().main()
         webbrowser.open("file://" + os.path.realpath(LDAvis_prep_html_path + ".html"))
+
+        return self.tweets_df
 
 
 if __name__ == "__main__":

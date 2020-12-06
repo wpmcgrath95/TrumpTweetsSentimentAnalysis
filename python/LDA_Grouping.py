@@ -119,7 +119,7 @@ class LDAGrouping(object):
         common_words_plt = os.path.join(self.this_dir, "../plots/common_words.png")
         plt.savefig(common_words_plt, bbox_inches="tight")
 
-        return None
+        return words
 
     def lda_model(self, count_data, n_topics) -> LDA:
         # create and fit the LDA model
@@ -151,7 +151,7 @@ class LDAGrouping(object):
         count_data = count_vectorizer.fit_transform(self.tweets_df["content_pro"])
 
         # most common words
-        self.most_common_words(count_data, count_vectorizer)
+        most_com_words = self.most_common_words(count_data, count_vectorizer)
 
         # fitted lda model with 20 topics
         n_topics, lda_fitted = self.lda_model(count_data, 20)
@@ -178,8 +178,8 @@ class LDAGrouping(object):
             # save html file
             pyLDAvis.save_html(LDAvis_prep, LDAvis_prep_html_path + ".html")
 
-        # need to return groups as well
-        return LDAvis_prep_html_path
+        # returns interactive plot, groups, and 10 most common words
+        return LDAvis_prep_html_path, most_com_words
 
 
 if __name__ == "__main__":
