@@ -74,7 +74,7 @@ class SentimentOfTweets(object):
 
         return overall_cnt
 
-    def to_sentiment(self, polarity):
+    def sentimize(self):
         # target column (determine sentiment based on other model)
         """
         polarity = np.round(polarity, 2
@@ -115,11 +115,11 @@ class SentimentOfTweets(object):
 
         # feat 5: elapsed time (time since last tweet)
         position = self.tweets_df.columns.get_loc("date")
-        self.tweets_df["elapsed_time"] = (
+        self.tweets_df["last_tweet_elapsed_time"] = (
             self.tweets_df.iloc[1:, position] - self.tweets_df.iat[0, position]
         )
         elapsed_col = self.tweets_df.elapsed_time
-        self.tweets_df["elapsed_time"] = elapsed_col.dt.total_seconds()
+        self.tweets_df["last_tweet_elapsed_time"] = elapsed_col.dt.total_seconds()
 
         # feat 6: get how many of the 10 most common words are in a tweet
         self.tweets_df["tweet_comm_word_cnt"] = self.tweets_df[
@@ -186,7 +186,7 @@ class SentimentOfTweets(object):
 
         # response variable
         self.tweets_df["target"] = self.tweets_df["polarity_score"].apply(
-            self.to_sentiment
+            self.sentimize()
         )
 
         print(self.tweets_df.head(25))

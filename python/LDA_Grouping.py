@@ -13,6 +13,7 @@ import seaborn as sns
 from pyLDAvis import sklearn as sklearn_lda
 from sklearn.decomposition import LatentDirichletAllocation as LDA
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.model_selection import GridSearchCV
 from wordcloud import WordCloud
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -147,7 +148,13 @@ class LDAGrouping(object):
         pass
 
     def grid_search(self):
-        pass
+        # find best LDA model
+        # search parameters
+        search_params = {
+            "n_components": [5, 10, 15, 20, 25, 30],
+            "learning_decay": [0.5, 0.7, 0.9],
+        }
+        GridSearchCV(search_params)
 
     def main(self):
         # set seed
