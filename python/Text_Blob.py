@@ -67,7 +67,7 @@ class SentimentOfTweets(object):
                 overall_cnt = overall_cnt + word_cnt
         elif not istweet and type(tweet) == str:
             for word in most_comm_words:
-                word_cnt = len(re.findall(word, tweet))
+                word_cnt = len(re.findall(word, tweet.lower()))
                 overall_cnt = overall_cnt + word_cnt
         else:
             pass
@@ -131,8 +131,18 @@ class SentimentOfTweets(object):
             lambda tweet: len(tweet.split(",")) if type(tweet) == str else 0
         )
 
-        # feat 8: get how many of the 10 most common words are in a hashtag
+        # feat 8: how many of the 10 most common words are in Tweet's hashtag(s)
         self.tweets_df["hashtag_comm_word_cnt"] = self.tweets_df["hashtags"].apply(
+            lambda tweet: self.comm_word_count(self.most_comm_words, False, tweet)
+        )
+
+        # feat 9: number of mentions
+        self.tweets_df["mention_cnt"] = self.tweets_df["mentions"].apply(
+            lambda tweet: len(tweet.split(",")) if type(tweet) == str else 0
+        )
+
+        # feat 10: how many of the 10 most common words are in a Tweet's mention(s)
+        self.tweets_df["mention_comm_word_cnt"] = self.tweets_df["mentions"].apply(
             lambda tweet: self.comm_word_count(self.most_comm_words, False, tweet)
         )
 
@@ -186,6 +196,10 @@ class SentimentOfTweets(object):
         webbrowser.open(
             "file://" + os.path.realpath(self.LDAvis_prep_html_path + ".html")
         )
+
+        # save Twitter df with data and feats to csv in data folder
+        feat_dir = os.path.join(self.this_dir, "~/Desktop/twitter_data_with_feats.csv")
+        self.tweets_df.to_csv(feat_dir, encoding="utf-8", index=False)
 
         return None
 

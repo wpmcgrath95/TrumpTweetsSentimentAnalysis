@@ -134,6 +134,9 @@ class LDAGrouping(object):
 
         return n_topics, lda_fitted
 
+    def grid_search(self):
+        pass
+
     def main(self):
         # set seed
         np.random.seed(2)
