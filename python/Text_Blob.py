@@ -198,7 +198,7 @@ class SentimentOfTweets(object):
         )
 
         # save Twitter df with data and feats to csv in data folder
-        feat_dir = os.path.join(self.this_dir, "~/Desktop/twitter_data_with_feats.csv")
+        feat_dir = "~/Desktop/twitter_data_with_feats.csv"
         self.tweets_df.to_csv(feat_dir, encoding="utf-8", index=False)
 
         return None

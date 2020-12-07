@@ -26,7 +26,7 @@ class LDAGrouping(object):
         data_dir = os.path.join(self.this_dir, "../data/realdonaldtrump.csv")
         self.tweets_df = pd.read_csv(data_dir, sep=",")
 
-    def process_tweet(self):
+    def process_tweets(self):
         # convert to lowercase letters
         self.tweets_df["content_pro"] = self.tweets_df["content"].map(
             lambda x: x.lower()
@@ -69,7 +69,7 @@ class LDAGrouping(object):
 
         return None
 
-    def word_cloud(self):
+    def word_cloud(self, img_path):
         # join different processed tweets together
         long_string = ",".join(list(self.tweets_df["content_pro"].values))
 
@@ -85,8 +85,7 @@ class LDAGrouping(object):
         word_cloud.generate(long_string)
 
         # save word cloud as a png file
-        word_cloud_img = os.path.join(self.this_dir, "../plots/word_cloud.png")
-        word_cloud.to_file(word_cloud_img)
+        word_cloud.to_file(img_path)
 
         return None
 
@@ -122,17 +121,30 @@ class LDAGrouping(object):
         return words
 
     def lda_model(self, count_data, n_topics) -> LDA:
-        # create and fit the LDA model
-        lda = LDA(
-            n_components=n_topics,
-            topic_word_prior=0.1,
-            doc_topic_prior=0.1,
-            n_jobs=-1,
-            random_state=0,
-        )
-        lda_fitted = lda.fit(count_data)
+        # create/load and fit the LDA model
+        model_dir = os.path.join(self.this_dir, "../models/lda_model.pickle")
+        try:
+            with open(model_dir, "rb") as f:
+                lda_fitted = cPickle.load(f)
+
+        except FileNotFoundError:
+            with open(model_dir, "wb") as f:
+
+                lda = LDA(
+                    n_components=n_topics,
+                    topic_word_prior=0.1,
+                    doc_topic_prior=0.1,
+                    n_jobs=-1,
+                    random_state=0,
+                )
+
+                lda_fitted = lda.fit(count_data)
+                cPickle.dump(lda_fitted, f)
 
         return n_topics, lda_fitted
+
+    def transform(self):
+        pass
 
     def grid_search(self):
         pass
@@ -142,10 +154,12 @@ class LDAGrouping(object):
         np.random.seed(2)
 
         # processed data
-        self.process_tweet()
+        self.process_tweets()
 
         # word cloud
-        self.word_cloud()
+        word_cloud_img = os.path.join(self.this_dir, "../plots/word_cloud.png")
+        if not os.path.isfile(word_cloud_img):
+            self.word_cloud(word_cloud_img)
 
         # initialise the count vectorizer with English stop words
         count_vectorizer = CountVectorizer(stop_words="english")
