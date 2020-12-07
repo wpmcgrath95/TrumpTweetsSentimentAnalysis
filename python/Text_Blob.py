@@ -3,7 +3,7 @@
 # Create by: Will McGrath
 
 """
-Input: Donald Trump Tweets
+Input: Donald Trump Tweets up to June 2020
 
 Description:
     set target variable based on average polarity score with 3 rules
@@ -21,6 +21,7 @@ Description:
 Output: Docker file that can ran with sentiement of Tweets
 """
 import os
+import re
 import sys
 import webbrowser
 
@@ -39,11 +40,11 @@ class SentimentOfTweets(object):
         data_dir = os.path.join(self.this_dir, "../data/realdonaldtrump.csv")
         self.tweets_df = pd.read_csv(data_dir, sep=",")
 
-        # import LDA model
+        # import LDA model with 10 most common words used by Trump
         (
             processed_content,
             self.LDAvis_prep_html_path,
-            self.most_com_words,
+            self.most_comm_words,
         ) = LDAGrouping().main()
         self.tweets_df["processed_content"] = processed_content
 
@@ -58,11 +59,18 @@ class SentimentOfTweets(object):
         return None
 
     @staticmethod
-    def get_count(most_com_words: list, tweet: str) -> int:
+    def comm_word_count(most_comm_words: list, istweet: bool, tweet: str) -> int:
         overall_cnt = 0
-        for word in most_com_words:
-            word_cnt = TextBlob(tweet).words.count(word)
-            overall_cnt = overall_cnt + word_cnt
+        if istweet:
+            for word in most_comm_words:
+                word_cnt = TextBlob(tweet).words.count(word)
+                overall_cnt = overall_cnt + word_cnt
+        elif not istweet and type(tweet) == str:
+            for word in most_comm_words:
+                word_cnt = len(re.findall(word, tweet))
+                overall_cnt = overall_cnt + word_cnt
+        else:
+            pass
 
         return overall_cnt
 
@@ -113,9 +121,19 @@ class SentimentOfTweets(object):
         elapsed_col = self.tweets_df.elapsed_time
         self.tweets_df["elapsed_time"] = elapsed_col.dt.total_seconds()
 
-        # feat 6: get how many of the 10 most common words are in tweet
-        self.tweets_df["com_word_cnt"] = self.tweets_df["processed_content"].apply(
-            lambda tweet: self.get_count(self.most_com_words, tweet)
+        # feat 6: get how many of the 10 most common words are in a tweet
+        self.tweets_df["tweet_comm_word_cnt"] = self.tweets_df[
+            "processed_content"
+        ].apply(lambda tweet: self.comm_word_count(self.most_comm_words, True, tweet))
+
+        # feat 7: number of hastags
+        self.tweets_df["hashtag_cnt"] = self.tweets_df["hashtags"].apply(
+            lambda tweet: len(tweet.split(",")) if type(tweet) == str else 0
+        )
+
+        # feat 8: get how many of the 10 most common words are in a hashtag
+        self.tweets_df["hashtag_comm_word_cnt"] = self.tweets_df["hashtags"].apply(
+            lambda tweet: self.comm_word_count(self.most_comm_words, False, tweet)
         )
 
         return None
@@ -130,6 +148,9 @@ class SentimentOfTweets(object):
     def pipeline(self):
         pass
 
+    def get_performance(self):
+        self
+
     def main(self):
         # set seed
         np.random.seed(1)
@@ -140,18 +161,20 @@ class SentimentOfTweets(object):
         # add features to tweets_df
         self.feature_engineering()
 
+        # need to add to target
         # subjectivity score - opinion vs non-opinion
         # i.e. 1=opinion and 0=fact
         self.tweets_df["subjectivity_score"] = self.tweets_df[
             "processed_content"
         ].apply(lambda tweet: TextBlob(tweet).sentiment[1])
 
+        # need to add to target
         # get polarity of each tweet
         self.tweets_df["polarity_score"] = self.tweets_df["processed_content"].apply(
             lambda tweet: TextBlob(tweet).sentiment[0]
         )
 
-        # response var
+        # response variable
         self.tweets_df["target"] = self.tweets_df["polarity_score"].apply(
             self.to_sentiment
         )
