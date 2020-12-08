@@ -3,11 +3,11 @@
 # Create by: Will McGrath
 
 """
-Input: Donald Trump Tweets up to June 2020
+Input: Donald Trump tweets up to June 2020
 
 Description:
     set target variable based on average polarity score with 3 rules
-    1. choose 100 random tweets and label them
+    1. choose 100 random tweets and label them (label Tweetws that are new and some old)
     2. build a model on those 100 random tweets
     3. use this model to predict the rest of the tweets and
     4. check to see the ones that were scored well so check ones
@@ -18,7 +18,9 @@ Description:
     7. then use PCA
     8. then unsupervised model (k-means) and check perf of ones you labeled
 
-Output: Docker file that can ran with sentiement of Tweets
+Output: Docker file that can be ran to predict the sentiment behind Trump tweets
+        Note: the sentiment being predicted is how Trump feels about the subject
+              in the tweet
 """
 import os
 import re
@@ -74,22 +76,6 @@ class SentimentOfTweets(object):
 
         return overall_cnt
 
-    def sentimize(self):
-        # target column (determine sentiment based on other model)
-        """
-        polarity = np.round(polarity, 2
-        if not math.isnan(polarity):
-            if polarity >= -1 and polarity <= -0.33:
-                return -1
-            elif polarity > -0.33 and polarity <= 0.33:
-                return 0
-            else:
-                return 1
-        else:
-            return np.nan
-        """
-        pass
-
     def feature_engineering(self):
         # might want some tweets like hashtags to use unprocessed content
         # feat 1: day of week (Monday, Tuesday, etc.)
@@ -118,7 +104,7 @@ class SentimentOfTweets(object):
         self.tweets_df["last_tweet_elapsed_time"] = (
             self.tweets_df.iloc[1:, position] - self.tweets_df.iat[0, position]
         )
-        elapsed_col = self.tweets_df.elapsed_time
+        elapsed_col = self.tweets_df.last_tweet_elapsed_time
         self.tweets_df["last_tweet_elapsed_time"] = elapsed_col.dt.total_seconds()
 
         # feat 6: get how many of the 10 most common words are in a tweet
@@ -156,38 +142,34 @@ class SentimentOfTweets(object):
         pass
 
     def pipeline(self):
+        # add gridsearch to maximize recall
         pass
 
-    def get_performance(self):
-        self
+    def performance(self):
+        # ROC curve, PPV, TPR, F1
+        pass
 
     def main(self):
         # set seed
         np.random.seed(1)
-        # spell check words in each tweet or row (takes a long time to run..)
-        # self.tweets_df["crt_spell"]=self.tweets_df["content"].apply(lambda t:
-        # TextBlob(t).correct())
 
         # add features to tweets_df
         self.feature_engineering()
 
         # need to add to target
-        # subjectivity score - opinion vs non-opinion
+        # subjectivity score: opinion vs non-opinion
         # i.e. 1=opinion and 0=fact
         self.tweets_df["subjectivity_score"] = self.tweets_df[
             "processed_content"
         ].apply(lambda tweet: TextBlob(tweet).sentiment[1])
 
-        # need to add to target
         # get polarity of each tweet
         self.tweets_df["polarity_score"] = self.tweets_df["processed_content"].apply(
             lambda tweet: TextBlob(tweet).sentiment[0]
         )
 
-        # response variable
-        self.tweets_df["target"] = self.tweets_df["polarity_score"].apply(
-            self.sentimize()
-        )
+        # response variable (need to predict)
+        self.tweets_df["target"] = ""
 
         print(self.tweets_df.head(25))
         print(self.tweets_df["target"].value_counts())

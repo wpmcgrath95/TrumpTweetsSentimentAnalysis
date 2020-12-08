@@ -19,7 +19,7 @@ from wordcloud import WordCloud
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
-# add LDA model to group Tweets and add it as a feature
+# add LDA model to group tweets and add it as a feature
 class LDAGrouping(object):
     def __init__(self):
         # load the trump tweets directly from repository
@@ -38,14 +38,19 @@ class LDAGrouping(object):
             lambda x: re.sub(r"[,\.!?]", "", x)
         )
 
+        # remove more punctuation
+        self.tweets_df["content_pro"] = self.tweets_df["content_pro"].map(
+            lambda x: re.sub(r"[^\w\s]", "", x)
+        )
+
         # remove numbers
         self.tweets_df["content_pro"] = self.tweets_df["content_pro"].map(
             lambda x: re.sub("[0-9]", "", x)
         )
 
-        # remove URLs (treat as raw string with r)
+        # remove https URLs (treat as raw string with r)
         self.tweets_df["content_pro"] = self.tweets_df["content_pro"].map(
-            lambda x: re.sub(r"https?://\S+", "", x)
+            lambda x: re.sub(r"https?://\S+|http[s]?\S+", "", x)
         )
 
         # remove NonASCII characters
@@ -66,6 +71,26 @@ class LDAGrouping(object):
         # remove quotes
         self.tweets_df["content_pro"] = self.tweets_df["content_pro"].map(
             lambda x: x.replace('"', "")
+        )
+
+        # remove @ symbols
+        self.tweets_df["content_pro"] = self.tweets_df["content_pro"].map(
+            lambda x: re.sub(r"[@]\w+", "user", x)
+        )
+
+        # remove # symbols
+        self.tweets_df["content_pro"] = self.tweets_df["content_pro"].map(
+            lambda x: re.sub(r"#", "", x)
+        )
+
+        # remove & symbols
+        self.tweets_df["content_pro"] = self.tweets_df["content_pro"].map(
+            lambda x: re.sub(r"&", "and", x)
+        )
+
+        # remove % symbols
+        self.tweets_df["content_pro"] = self.tweets_df["content_pro"].map(
+            lambda x: re.sub(r"%", "percent", x)
         )
 
         return None
@@ -126,12 +151,11 @@ class LDAGrouping(object):
         model_dir = os.path.join(self.this_dir, "../models/lda_model.pickle")
         try:
             with open(model_dir, "rb") as f:
-                lda_fitted = cPickle.load(f)
+                lda_model = cPickle.load(f)
 
         except FileNotFoundError:
             with open(model_dir, "wb") as f:
-
-                lda = LDA(
+                lda_model = LDA(
                     n_components=n_topics,
                     topic_word_prior=0.1,
                     doc_topic_prior=0.1,
@@ -139,22 +163,62 @@ class LDAGrouping(object):
                     random_state=0,
                 )
 
-                lda_fitted = lda.fit(count_data)
-                cPickle.dump(lda_fitted, f)
+                lda_model.fit(count_data)
+                cPickle.dump(lda_model, f)
 
-        return n_topics, lda_fitted
+        return n_topics, lda_model
 
     def transform(self):
         pass
 
-    def grid_search(self):
-        # find best LDA model
-        # search parameters
-        search_params = {
-            "n_components": [5, 10, 15, 20, 25, 30],
-            "learning_decay": [0.5, 0.7, 0.9],
-        }
-        GridSearchCV(search_params)
+    def grid_search(self, count_data):
+        # find best LDA model (hyperparameter optimization)
+        # bigger α (doc_topic_prior) = more similarity b/t topics in diff docs
+        # bigger β (topic_word_prior) = more similarity b/t words in diff topics
+        # learning decay = controls learning rate
+        # n components (most important) = number of topics
+        # learning_method = online (faster than batch for large datasets)
+        # n jobs = -1 (means all CPUs are used)
+        model_dir = os.path.join(self.this_dir, "../models/best_lda_model.pickle")
+        try:
+            with open(model_dir, "rb") as f:
+                best_lda_model = cPickle.load(f)
+
+        except FileNotFoundError:
+            with open(model_dir, "wb") as f:
+                # search parameters to iterate through
+                search_params = {
+                    "n_components": [5, 10, 15, 20, 25],
+                    "learning_decay": [0.5, 0.7, 0.9],
+                    "topic_word_prior": [None, 0.1],
+                    "doc_topic_prior": [None, 0.1],
+                }
+
+                # LDA model
+                lda_model = LDA(
+                    learning_method="online",
+                    n_jobs=-1,
+                    random_state=0,
+                )
+
+                # use grid search to get best LDA estimator
+                clf = GridSearchCV(lda_model, param_grid=search_params)
+                clf.fit(count_data)
+                best_lda_model = clf.best_estimator_
+                cPickle.dump(best_lda_model, f)
+
+        return best_lda_model
+
+    def performance(self, count_data, model):
+        # performance of the vectorized processed tweets (count_data)
+        # log likelihood: higher the better
+        log_likelihood = model.score(count_data)
+
+        # perplexity: Lower the better
+        # perplexity = exp(-1. * log-likelihood per word)
+        perplexity = model.perplexity(count_data)
+
+        return log_likelihood, perplexity
 
     def main(self):
         # set seed
@@ -171,14 +235,32 @@ class LDAGrouping(object):
         # initialise the count vectorizer with English stop words
         count_vectorizer = CountVectorizer(stop_words="english")
 
-        # fit and transform the processed tweets
+        # fit and transform processed tweets (counts the number of each word in vector)
         count_data = count_vectorizer.fit_transform(self.tweets_df["content_pro"])
 
         # most common words
         most_comm_words = self.most_common_words(count_data, count_vectorizer)
 
-        # fitted lda model with 20 topics
-        n_topics, lda_fitted = self.lda_model(count_data, 20)
+        # fitted LDA model with 20 topics
+        n_topics, lda_model = self.lda_model(count_data, 20)
+
+        # fitted LDA model performance
+        log_like, perp = self.performance(count_data, lda_model)
+        print("Model: lda_model", end="\n")
+        print(f"Log Likelihood: {log_like}")
+        print(f"Perplexity: {perp}")
+
+        """
+        # best fitted LDA model
+        best_lda_model = self.grid_search(count_data)
+
+        # best fitted LDA model performance
+        log_like_best, perp_best = self.performance(count_data,best_lda_model)
+        print("Model: best_lda_model",end="\n")
+        print(f"Best Model's Params: {best_lda_model.best_params_}")
+        print(f"Log Likelihood: {log_like_best}")
+        print(f"Perplexity: {perp_best}")
+        """
 
         # set LDAvis_prepared paths
         LDAvis_prep_data_path = os.path.join(
@@ -195,12 +277,16 @@ class LDAGrouping(object):
                 LDAvis_prep = cPickle.load(f)
 
         except FileNotFoundError:
-            LDAvis_prep = sklearn_lda.prepare(lda_fitted, count_data, count_vectorizer)
+            LDAvis_prep = sklearn_lda.prepare(lda_model, count_data, count_vectorizer)
             with open(LDAvis_prep_data_path, "wb") as f:
                 cPickle.dump(LDAvis_prep, f)
 
             # save html file
             pyLDAvis.save_html(LDAvis_prep, LDAvis_prep_html_path + ".html")
+
+        # save Twitter df with data and feats to csv in data folder
+        feat_dir = "~/Desktop/twitter_data_with_feats.csv"
+        self.tweets_df.to_csv(feat_dir, encoding="utf-8", index=False)
 
         # returns interactive plot, groups, and 10 most common words
         return self.tweets_df["content_pro"], LDAvis_prep_html_path, most_comm_words
