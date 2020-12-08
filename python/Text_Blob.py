@@ -6,7 +6,6 @@
 Input: Donald Trump tweets up to June 2020
 
 Description:
-    set target variable based on average polarity score with 3 rules
     1. choose 100 random tweets and label them (label Tweetws that are new and some old)
     2. build a model on those 100 random tweets
     3. use this model to predict the rest of the tweets and
@@ -14,7 +13,7 @@ Description:
         that scored 1 or 0 and some in the middle, and label those.
         400 or more labeled
     5. build model on prev stuff and make that ground truth for unsup model
-    6. try transforming data like box-cox to improve performance
+    6. transforming data like box-cox, and scale data (standardize) to improve perf
     7. then use PCA
     8. then unsupervised model (k-means) and check perf of ones you labeled
 

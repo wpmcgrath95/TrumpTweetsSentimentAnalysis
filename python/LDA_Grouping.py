@@ -28,6 +28,7 @@ class LDAGrouping(object):
         self.tweets_df = pd.read_csv(data_dir, sep=",")
 
     def process_tweets(self):
+        # ETL procedure
         # convert to lowercase letters
         self.tweets_df["content_pro"] = self.tweets_df["content"].map(
             lambda x: x.lower()
@@ -48,7 +49,7 @@ class LDAGrouping(object):
             lambda x: re.sub("[0-9]", "", x)
         )
 
-        # remove https URLs (treat as raw string with r)
+        # remove http/https URLs (treat as raw string with r)
         self.tweets_df["content_pro"] = self.tweets_df["content_pro"].map(
             lambda x: re.sub(r"https?://\S+|http[s]?\S+", "", x)
         )
@@ -148,6 +149,8 @@ class LDAGrouping(object):
 
     def lda_model(self, count_data, n_topics) -> LDA:
         # create/load and fit the LDA model
+        # bigger α (doc_topic_prior) = more similarity b/t topics in diff docs
+        # bigger β (topic_word_prior) = more similarity b/t words in diff topics
         model_dir = os.path.join(self.this_dir, "../models/lda_model.pickle")
         try:
             with open(model_dir, "rb") as f:
@@ -168,17 +171,12 @@ class LDAGrouping(object):
 
         return n_topics, lda_model
 
-    def transform(self):
-        pass
-
     def grid_search(self, count_data):
         # find best LDA model (hyperparameter optimization)
-        # bigger α (doc_topic_prior) = more similarity b/t topics in diff docs
-        # bigger β (topic_word_prior) = more similarity b/t words in diff topics
         # learning decay = controls learning rate
         # n components (most important) = number of topics
         # learning_method = online (faster than batch for large datasets)
-        # n jobs = -1 (means all CPUs are used)
+        # n jobs = 1 (means 100% of 1 CPU is used)
         model_dir = os.path.join(self.this_dir, "../models/best_lda_model.pickle")
         try:
             with open(model_dir, "rb") as f:
@@ -188,16 +186,15 @@ class LDAGrouping(object):
             with open(model_dir, "wb") as f:
                 # search parameters to iterate through
                 search_params = {
-                    "n_components": [5, 10, 15, 20, 25],
+                    "n_components": [5, 10, 15, 20],
                     "learning_decay": [0.5, 0.7, 0.9],
-                    "topic_word_prior": [None, 0.1],
-                    "doc_topic_prior": [None, 0.1],
                 }
 
                 # LDA model
                 lda_model = LDA(
+                    max_iter=5,
                     learning_method="online",
-                    n_jobs=-1,
+                    n_jobs=1,
                     random_state=0,
                 )
 
@@ -208,6 +205,38 @@ class LDAGrouping(object):
                 cPickle.dump(best_lda_model, f)
 
         return best_lda_model
+
+    def extract_topics(self, count_vectorizer, model):
+        # top 15 keywords for each topic
+        num_words = 15
+        keywords = np.array(count_vectorizer.get_feature_names())
+        top_keywords = [
+            keywords.take((-weights).argsort()[:num_words])
+            for weights in model.components_
+        ]
+
+        # topic and keyword dataframe with top 15 keywords
+        topic_keywords_df = pd.DataFrame(top_keywords)
+        topic_keywords_df.columns = [
+            "Word_" + str(i) for i in range(topic_keywords_df.shape[1])
+        ]
+        topic_keywords_df.index = [
+            "Topic_" + str(i) for i in range(topic_keywords_df.shape[0])
+        ]
+
+        # infer topics (subjective)
+        topics = [
+            "Fake News/Things Trump Wants to Change as President",
+            "News/Fox News/CNN",
+            "America/Campaign",
+            "MAGA/Golf",
+            "Trump/Great/President",
+        ]
+
+        # add topics to dataframe
+        topic_keywords_df["Topics"] = topics
+
+        return topic_keywords_df
 
     def performance(self, count_data, model):
         # performance of the vectorized processed tweets (count_data)
@@ -241,26 +270,19 @@ class LDAGrouping(object):
         # most common words
         most_comm_words = self.most_common_words(count_data, count_vectorizer)
 
-        # fitted LDA model with 20 topics
-        n_topics, lda_model = self.lda_model(count_data, 20)
-
-        # fitted LDA model performance
-        log_like, perp = self.performance(count_data, lda_model)
-        print("Model: lda_model", end="\n")
-        print(f"Log Likelihood: {log_like}")
-        print(f"Perplexity: {perp}")
-
-        """
-        # best fitted LDA model
+        # best fitted LDA model and num of topics
         best_lda_model = self.grid_search(count_data)
+        n_topics = best_lda_model.n_components
 
         # best fitted LDA model performance
-        log_like_best, perp_best = self.performance(count_data,best_lda_model)
-        print("Model: best_lda_model",end="\n")
-        print(f"Best Model's Params: {best_lda_model.best_params_}")
+        log_like_best, perp_best = self.performance(count_data, best_lda_model)
+        print("Model: best_lda_model", end="\n")
+        print(f"Best Model's Params: {best_lda_model.get_params()}")
         print(f"Log Likelihood: {log_like_best}")
         print(f"Perplexity: {perp_best}")
-        """
+
+        # extract topic from top keywords in each topic
+        topic_keywords_df = self.extract_topics(count_vectorizer, best_lda_model)
 
         # set LDAvis_prepared paths
         LDAvis_prep_data_path = os.path.join(
@@ -277,19 +299,22 @@ class LDAGrouping(object):
                 LDAvis_prep = cPickle.load(f)
 
         except FileNotFoundError:
-            LDAvis_prep = sklearn_lda.prepare(lda_model, count_data, count_vectorizer)
+            LDAvis_prep = sklearn_lda.prepare(
+                best_lda_model, count_data, count_vectorizer
+            )
             with open(LDAvis_prep_data_path, "wb") as f:
                 cPickle.dump(LDAvis_prep, f)
 
             # save html file
             pyLDAvis.save_html(LDAvis_prep, LDAvis_prep_html_path + ".html")
 
-        # save Twitter df with data and feats to csv in data folder
-        feat_dir = "~/Desktop/twitter_data_with_feats.csv"
-        self.tweets_df.to_csv(feat_dir, encoding="utf-8", index=False)
-
         # returns interactive plot, groups, and 10 most common words
-        return self.tweets_df["content_pro"], LDAvis_prep_html_path, most_comm_words
+        return (
+            self.tweets_df["content_pro"],
+            LDAvis_prep_html_path,
+            most_comm_words,
+            topic_keywords_df["Topics"],
+        )
 
 
 if __name__ == "__main__":
