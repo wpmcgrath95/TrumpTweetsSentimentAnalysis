@@ -206,7 +206,23 @@ class LDAGrouping(object):
 
         return best_lda_model
 
-    def extract_topics(self, count_vectorizer, model):
+    def extract_topics(self, count_data, count_vectorizer, model):
+        # all tweets with topics matrix
+        doc_topic_matrix = model.transform(count_data)
+
+        # column and index names
+        topic_names = ["topic_" + str(i) for i in range(model.n_components)]
+        doc_names = ["doc_" + str(i) for i in range(len(self.tweets_df))]
+
+        # tweets and topics dataframe
+        doc_topic_df = pd.DataFrame(
+            np.round(doc_topic_matrix, 2), columns=topic_names, index=doc_names
+        )
+
+        # get dominant topic for each tweets
+        dominant_topic = np.argmax(doc_topic_df.values, axis=1)
+        doc_topic_df["dominant_topic"] = dominant_topic
+
         # top 15 keywords for each topic
         num_words = 15
         keywords = np.array(count_vectorizer.get_feature_names())
@@ -215,15 +231,16 @@ class LDAGrouping(object):
             for weights in model.components_
         ]
 
-        # topic and keyword dataframe with top 15 keywords
+        # topics and keywords dataframe with top 15 keywords
         topic_keywords_df = pd.DataFrame(top_keywords)
         topic_keywords_df.columns = [
-            "Word_" + str(i) for i in range(topic_keywords_df.shape[1])
+            "word_" + str(i) for i in range(topic_keywords_df.shape[1])
         ]
         topic_keywords_df.index = [
-            "Topic_" + str(i) for i in range(topic_keywords_df.shape[0])
+            "topic_" + str(i) for i in range(topic_keywords_df.shape[0])
         ]
 
+        # print(topic_keywords_df) to see words in each topic
         # infer topics (subjective)
         topics = [
             "Fake News/Things Trump Wants to Change as President",
@@ -234,9 +251,14 @@ class LDAGrouping(object):
         ]
 
         # add topics to dataframe
-        topic_keywords_df["Topics"] = topics
+        topic_keywords_df["topic"] = topics
 
-        return topic_keywords_df
+        # match topic to tweets and topics dataframe
+        doc_topic_df["topic"] = doc_topic_df["dominant_topic"].apply(
+            lambda t: topics[t]
+        )
+
+        return doc_topic_df
 
     def performance(self, count_data, model):
         # performance of the vectorized processed tweets (count_data)
@@ -281,8 +303,11 @@ class LDAGrouping(object):
         print(f"Log Likelihood: {log_like_best}")
         print(f"Perplexity: {perp_best}")
 
-        # extract topic from top keywords in each topic
-        topic_keywords_df = self.extract_topics(count_vectorizer, best_lda_model)
+        # extract topics from top keywords in each tweet
+        doc_topic_df = self.extract_topics(count_data, count_vectorizer, best_lda_model)
+
+        # add topics to self.tweets_df
+        self.tweets_df["topic"] = doc_topic_df["topic"].tolist()
 
         # set LDAvis_prepared paths
         LDAvis_prep_data_path = os.path.join(
@@ -310,10 +335,9 @@ class LDAGrouping(object):
 
         # returns interactive plot, groups, and 10 most common words
         return (
-            self.tweets_df["content_pro"],
+            self.tweets_df[["content_pro", "topic"]],
             LDAvis_prep_html_path,
             most_comm_words,
-            topic_keywords_df["Topics"],
         )
 
 

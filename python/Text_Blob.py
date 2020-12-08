@@ -41,13 +41,16 @@ class SentimentOfTweets(object):
         data_dir = os.path.join(self.this_dir, "../data/realdonaldtrump.csv")
         self.tweets_df = pd.read_csv(data_dir, sep=",")
 
-        # import LDA model with 10 most common words used by Trump
+        # import Trump's processed content w/ 10 most common words and topics
         (
             processed_content,
             self.LDAvis_prep_html_path,
             self.most_comm_words,
         ) = LDAGrouping().main()
-        self.tweets_df["processed_content"] = processed_content
+        self.tweets_df["processed_content"] = processed_content["content_pro"]
+
+        # feat: predicted topic of tweet
+        self.tweets_df["topic"] = processed_content["topic"]
 
     @staticmethod
     def print_heading(title: str) -> str:
@@ -76,29 +79,29 @@ class SentimentOfTweets(object):
         return overall_cnt
 
     def feature_engineering(self):
-        # might want some tweets like hashtags to use unprocessed content
-        # feat 1: day of week (Monday, Tuesday, etc.)
+        # some tweets like hashtags use unprocessed content
+        # feat: day of week (Monday, Tuesday, etc.)
         self.tweets_df["date"] = pd.to_datetime(
             self.tweets_df.date, format="%Y-%m-%d %H:%M:%S"
         )
         self.tweets_df["day_of_week"] = self.tweets_df["date"].dt.day_name()
 
-        # feat 2: MAGA count
+        # feat: MAGA count
         self.tweets_df["MAGA_count"] = self.tweets_df["processed_content"].apply(
             lambda tweet: TextBlob(tweet).words.count("MAGA")
         )
 
-        # feat 3: word count
+        # feat: word count
         self.tweets_df["word_count"] = self.tweets_df["processed_content"].apply(
             lambda tweet: len(tweet.split())
         )
 
-        # feat 4: character count
+        # feat: character count
         self.tweets_df["character_count"] = self.tweets_df["processed_content"].apply(
             lambda tweet: len(tweet)
         )
 
-        # feat 5: elapsed time (time since last tweet)
+        # feat: elapsed time (time since last tweet)
         position = self.tweets_df.columns.get_loc("date")
         self.tweets_df["last_tweet_elapsed_time"] = (
             self.tweets_df.iloc[1:, position] - self.tweets_df.iat[0, position]
@@ -106,30 +109,113 @@ class SentimentOfTweets(object):
         elapsed_col = self.tweets_df.last_tweet_elapsed_time
         self.tweets_df["last_tweet_elapsed_time"] = elapsed_col.dt.total_seconds()
 
-        # feat 6: get how many of the 10 most common words are in a tweet
+        # feat: number of days (24 hrs) from previous tweet
+        self.tweets_df["time_diff"] = (
+            self.tweets_df["date"].diff().apply(lambda x: x.days).fillna(0)
+        )
+
+        # feat: number of days in last 90 tweets
+        self.tweets_df["days_last_90_rows"] = (
+            self.tweets_df["time_diff"].rolling(window=90).sum()
+        )
+
+        # feat: number of days in last 180 tweets
+        self.tweets_df["days_last_180_rows"] = (
+            self.tweets_df["time_diff"].rolling(window=180).sum()
+        )
+
+        # feat: get how many of the 10 most common words are in a tweet
         self.tweets_df["tweet_comm_word_cnt"] = self.tweets_df[
             "processed_content"
         ].apply(lambda tweet: self.comm_word_count(self.most_comm_words, True, tweet))
 
-        # feat 7: number of hastags
+        # feat: number of hastags
         self.tweets_df["hashtag_cnt"] = self.tweets_df["hashtags"].apply(
             lambda tweet: len(tweet.split(",")) if type(tweet) == str else 0
         )
 
-        # feat 8: how many of the 10 most common words are in Tweet's hashtag(s)
+        # feat: how many of the 10 most common words are in tweet's hashtag(s)
         self.tweets_df["hashtag_comm_word_cnt"] = self.tweets_df["hashtags"].apply(
             lambda tweet: self.comm_word_count(self.most_comm_words, False, tweet)
         )
 
-        # feat 9: number of mentions
+        # feat: is topic in tweet's hashtag(s)
+
+        # feat: check if any of the topics are in tweet's hashtag(s)
+
+        # feat: most used hashtag in last 7 days
+
+        # feat: number of mentions
         self.tweets_df["mention_cnt"] = self.tweets_df["mentions"].apply(
             lambda tweet: len(tweet.split(",")) if type(tweet) == str else 0
         )
 
-        # feat 10: how many of the 10 most common words are in a Tweet's mention(s)
+        # feat: how many of the 10 most common words are in a tweet's mention(s)
         self.tweets_df["mention_comm_word_cnt"] = self.tweets_df["mentions"].apply(
             lambda tweet: self.comm_word_count(self.most_comm_words, False, tweet)
         )
+
+        # feat: number of 10 most common words are in a tweet's mention(s)
+
+        # feat: number of tweets in last 7 days
+
+        # feat: mean number of tweets in last 7 days
+
+        # feat: diff b/t number of retweets from previous tweet
+
+        # feat: number of retweets in last 7 days
+
+        # feat: diff b/t number of favorites from previous tweet
+
+        # feat: number of favorites in last 7 days
+
+        # feat: most used topic in last 3 days
+
+        # feat: most used topic in last 7 days
+
+        # feat: mean topic last 7 days
+
+        # feat: tweet's subjectivity
+        # subjectivity score: opinion vs fact (score is a number between 0.0 and 1.0)
+        # i.e. 0 = very objective (fact-based), 1.0 = very subjective (opinion-based)
+        self.tweets_df["subj_score"] = self.tweets_df["processed_content"].apply(
+            lambda tweet: TextBlob(tweet).sentiment[1]
+        )
+
+        # feat: diff in subjectivity from previous tweet
+        self.tweets_df["subj_diff"] = self.tweets_df["subj_score"].diff()
+
+        # feat: mean subjectivity in last 3 day
+
+        # feat: mean subjectivity in last 3 tweets
+        self.tweets_df["mean_subj_score_last_3_rows"] = (
+            self.tweets_df["subj_diff"].rolling(window=3).mean()
+        )
+
+        # feat: mean subjectivity in all tweets from previous day
+
+        # feat: mean subjectivity in last 7 day
+
+        # feat: tweet's polarity
+        # polarity score: score is a number between -1.0 and 1.0
+        # i.e. 1.0 = very negative, 0 = neutral, and 1 = very positive
+        self.tweets_df["polarity_score"] = self.tweets_df["processed_content"].apply(
+            lambda tweet: TextBlob(tweet).sentiment[0]
+        )
+
+        # feat: diff in polarity from previous tweet
+        self.tweets_df["polarity_diff"] = self.tweets_df["polarity_score"].diff()
+
+        # feat: mean polarity in last 3 day
+
+        # feat: mean polarity in last 3 tweets
+        self.tweets_df["mean_polarity_score_last_3_rows"] = (
+            self.tweets_df["polarity_diff"].rolling(window=3).mean()
+        )
+
+        # feat: mean polarity in all tweets from previous day
+
+        # feat: mean polarity in last 7 day
 
         return None
 
@@ -145,7 +231,7 @@ class SentimentOfTweets(object):
         pass
 
     def performance(self):
-        # ROC curve, PPV, TPR, F1
+        # ROC curve, PPV, TPR, F1, and SHAP values
         pass
 
     def main(self):
@@ -156,21 +242,8 @@ class SentimentOfTweets(object):
         self.feature_engineering()
 
         # need to add to target
-        # subjectivity score: opinion vs non-opinion
-        # i.e. 1=opinion and 0=fact
-        self.tweets_df["subjectivity_score"] = self.tweets_df[
-            "processed_content"
-        ].apply(lambda tweet: TextBlob(tweet).sentiment[1])
-
-        # get polarity of each tweet
-        self.tweets_df["polarity_score"] = self.tweets_df["processed_content"].apply(
-            lambda tweet: TextBlob(tweet).sentiment[0]
-        )
-
-        # response variable (need to predict)
+        # response variable (need to predict) and count
         self.tweets_df["target"] = ""
-
-        print(self.tweets_df.head(25))
         print(self.tweets_df["target"].value_counts())
 
         # opens LDAvis_prepared data
