@@ -22,7 +22,7 @@ from wordcloud import WordCloud
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
-# add LDA model to group tweets and add it as a feature
+# add unsupervided LDA model to group tweets and add it as a feature
 class LDAGrouping(object):
     def __init__(self):
         # load the trump tweets directly from repository
@@ -261,6 +261,8 @@ class LDAGrouping(object):
             lambda t: topics[t]
         )
 
+        print(topic_keywords_df)
+        print(doc_topic_df)
         return topics, doc_topic_df
 
     def performance(self, count_data, model):

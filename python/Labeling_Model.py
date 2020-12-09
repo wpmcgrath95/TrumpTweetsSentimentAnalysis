@@ -14,7 +14,6 @@
 import os
 import sys
 
-import numpy as np
 import pandas as pd
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
@@ -44,11 +43,16 @@ class LabelingModel(object):
 
         return merged_df
 
+    def encoding(self):
+        # transformating categ data
+        pass
+
     def upsample(self):
         # upsample class distribution
         pass
 
     def train(self, df):
+        # drop ids
         # define X = predictors and y = response vars
         X = df.iloc[:, 2:-1]
         y = df.iloc[:, -1]
@@ -61,7 +65,7 @@ class LabelingModel(object):
         # xgboost model
         xgb_model = xgb.XGBClassifier()
 
-        return
+        return xgb_model
 
     def pipeline(self):
         # add gridsearch to maximize recall

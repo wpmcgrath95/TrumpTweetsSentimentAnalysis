@@ -6,7 +6,7 @@
 Input: Donald Trump tweets up to June 2020
 
 Description:
-    1. choose 100 random tweets and label them (label Tweetws that are new and some old)
+    1. choose 100 random tweets and label them (label Tweets that are new and some old)
     2. build a model on those 100 random tweets
     3. use this model to predict the rest of the tweets and
     4. check to see the ones that were scored well so check ones
@@ -14,10 +14,14 @@ Description:
         400 or more labeled
     5. build model on prev stuff and make that ground truth for unsup model
     6. transforming data like box-cox, and scale data (standardize) to improve perf
+        try checking for importance, and multicorrelation (use VIF)
     7. then use PCA
-    8. then unsupervised model (k-means) and check perf of ones you labeled
+    8. then unsupervised model (k-means) and check perf of ones you labeled or
+        can try SVM (use bi-grams)
+    9. try using BERT
 
 Output: Docker file that can be ran to predict the sentiment behind Trump tweets
+        - add a volumn to Docker and output all plots and stuff to folder in vol
         Note: the sentiment being predicted is how Trump feels about the subject
               in the tweet
 """
@@ -237,6 +241,7 @@ class SentimentOfTweets(object):
         pass
 
     def train(self):
+        # drop ids
         pass
 
     def pipeline(self):
@@ -244,7 +249,8 @@ class SentimentOfTweets(object):
         pass
 
     def performance(self):
-        # ROC curve, PPV, TPR, F1, and SHAP values
+        # ROC curve, PPV, TPR, F1, SHAP values
+        # test multicorrelation using VIF
         pass
 
     def main(self):
@@ -259,7 +265,7 @@ class SentimentOfTweets(object):
         # self.tweets_df["target"] = ""
         # print(f"Target Value Count: {self.tweets_df['target'].value_counts()}")
         print(
-            f"Dataset: [{self.tweets_df.shape[0]} rows x {self.tweets_df.shape[1]} cols]"
+            f"Dataset:[{self.tweets_df.shape[0]} rows x {self.tweets_df.shape[1]} cols]"
         )
 
         # opens LDAvis_prepared data
