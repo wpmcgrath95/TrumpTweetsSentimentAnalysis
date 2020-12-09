@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# BDA 696 Final Project
+# Create by: Will McGrath
+
 import os
 import re
 import sys
@@ -258,7 +261,7 @@ class LDAGrouping(object):
             lambda t: topics[t]
         )
 
-        return doc_topic_df
+        return topics, doc_topic_df
 
     def performance(self, count_data, model):
         # performance of the vectorized processed tweets (count_data)
@@ -304,7 +307,9 @@ class LDAGrouping(object):
         print(f"Perplexity: {perp_best}")
 
         # extract topics from top keywords in each tweet
-        doc_topic_df = self.extract_topics(count_data, count_vectorizer, best_lda_model)
+        topics, doc_topic_df = self.extract_topics(
+            count_data, count_vectorizer, best_lda_model
+        )
 
         # add topics to self.tweets_df
         self.tweets_df["topic"] = doc_topic_df["topic"].tolist()
@@ -338,6 +343,7 @@ class LDAGrouping(object):
             self.tweets_df[["content_pro", "topic"]],
             LDAvis_prep_html_path,
             most_comm_words,
+            topics,
         )
 
 

@@ -46,6 +46,7 @@ class SentimentOfTweets(object):
             processed_content,
             self.LDAvis_prep_html_path,
             self.most_comm_words,
+            self.unique_topics,
         ) = LDAGrouping().main()
         self.tweets_df["processed_content"] = processed_content["content_pro"]
 
@@ -155,17 +156,17 @@ class SentimentOfTweets(object):
             lambda tweet: self.comm_word_count(self.most_comm_words, False, tweet)
         )
 
-        # feat: number of 10 most common words are in a tweet's mention(s)
-
         # feat: number of tweets in last 7 days
 
         # feat: mean number of tweets in last 7 days
 
         # feat: diff b/t number of retweets from previous tweet
+        self.tweets_df["RT_diff"] = self.tweets_df["retweets"].diff()
 
         # feat: number of retweets in last 7 days
 
         # feat: diff b/t number of favorites from previous tweet
+        self.tweets_df["fav_diff"] = self.tweets_df["favorites"].diff()
 
         # feat: number of favorites in last 7 days
 
@@ -217,6 +218,18 @@ class SentimentOfTweets(object):
 
         # feat: mean polarity in last 7 day
 
+        # feat: most common words in negative tweets
+
+        # feat: most common words in neutral tweets
+
+        # feat: most common words in positive tweets
+
+        # feat: common verbs in tweet
+
+        # feat: amount of misspellings
+
+        # feat: part of speech in tweet
+
         return None
 
     def upsample(self):
@@ -243,16 +256,19 @@ class SentimentOfTweets(object):
 
         # need to add to target
         # response variable (need to predict) and count
-        self.tweets_df["target"] = ""
-        print(self.tweets_df["target"].value_counts())
+        # self.tweets_df["target"] = ""
+        # print(f"Target Value Count: {self.tweets_df['target'].value_counts()}")
+        print(
+            f"Dataset: [{self.tweets_df.shape[0]} rows x {self.tweets_df.shape[1]} cols]"
+        )
 
         # opens LDAvis_prepared data
         webbrowser.open(
             "file://" + os.path.realpath(self.LDAvis_prep_html_path + ".html")
         )
 
-        # save Twitter df with data and feats to csv in data folder
-        feat_dir = "~/Desktop/twitter_data_with_feats.csv"
+        # save twitter df with data and feats to csv in data folder
+        feat_dir = os.path.join(self.this_dir, "../data/twitter_data_with_feats.csv")
         self.tweets_df.to_csv(feat_dir, encoding="utf-8", index=False)
 
         return None
