@@ -18,7 +18,11 @@ Description:
     7. then use PCA
     8. then unsupervised model (k-means) and check perf of ones you labeled or
         can try SVM (use bi-grams)
-    9. try using BERT
+    9. plot mean of response, try brute force and correlation plots to
+       get rid of unnecessary feats
+
+Plots:
+     - plot polarity vs subj distr
 
 Output: Docker file that can be ran to predict the sentiment behind Trump tweets
         - add a volumn to Docker and output all plots and stuff to folder in vol
@@ -85,11 +89,32 @@ class SentimentOfTweets(object):
 
     def feature_engineering(self):
         # some tweets like hashtags use unprocessed content
-        # feat: day of week (Monday, Tuesday, etc.)
         self.tweets_df["date"] = pd.to_datetime(
             self.tweets_df.date, format="%Y-%m-%d %H:%M:%S"
         )
-        self.tweets_df["day_of_week"] = self.tweets_df["date"].dt.day_name()
+
+        # shifting dates to get rid of hours
+        self.tweets_df["no_hr_date"] = pd.to_datetime(
+            self.tweets_df["date"]
+        ).dt.strftime("%m-%d-%Y")
+
+        self.tweets_df["no_hr_date"] = pd.to_datetime(
+            self.tweets_df["no_hr_date"], format="%m-%d-%Y"
+        )
+
+        # feat: day of week (Monday, Tuesday, etc.)
+        self.tweets_df["day_of_week"] = self.tweets_df["no_hr_date"].dt.day_name()
+
+        # feat: number of tweets on day or per row (always 1)
+        self.tweets_df["num_of_tweets"] = 1
+
+        # feat: day in last 7 days with most tweets (most active day)
+
+        # feat: most common day in last 10 tweets
+
+        # feat: number of unique days tweeted in last 7 days
+
+        # feat: number of unique days tweeted in last 30 days
 
         # feat: MAGA count
         self.tweets_df["MAGA_count"] = self.tweets_df["processed_content"].apply(
@@ -106,27 +131,62 @@ class SentimentOfTweets(object):
             lambda tweet: len(tweet)
         )
 
-        # feat: elapsed time (time since last tweet)
-        position = self.tweets_df.columns.get_loc("date")
-        self.tweets_df["last_tweet_elapsed_time"] = (
-            self.tweets_df.iloc[1:, position] - self.tweets_df.iat[0, position]
+        # feat: number of hrs from previous tweet
+        self.tweets_df["time_diff_hrs"] = (
+            self.tweets_df["date"]
+            .diff()
+            .apply(lambda x: np.round(x.total_seconds() / 3600), 2)
+            .fillna(0)
         )
-        elapsed_col = self.tweets_df.last_tweet_elapsed_time
-        self.tweets_df["last_tweet_elapsed_time"] = elapsed_col.dt.total_seconds()
 
-        # feat: number of days (24 hrs) from previous tweet
-        self.tweets_df["time_diff"] = (
-            self.tweets_df["date"].diff().apply(lambda x: x.days).fillna(0)
+        # feat: number of days from previous tweet
+        self.tweets_df["time_diff_days"] = (
+            self.tweets_df["no_hr_date"].diff().apply(lambda x: x.days).fillna(0)
+        )
+
+        # # feat: cumulative sum of days from 1st tweet
+        # self.tweets_df["time_diff_days"] = (
+        #     self.tweets_df["no_hr_date"].diff().apply(lambda x: x.days).fillna(0)
+        # )
+
+        # feat: number of days in last 10 tweets
+        self.tweets_df["num_days_last_10_rows"] = (
+            self.tweets_df["time_diff_days"].rolling(window=10).sum()
+        )
+
+        # feat: mean number of days in last 10 tweets
+        self.tweets_df["mean_days_last_10_rows"] = (
+            self.tweets_df["time_diff_days"].rolling(window=10).mean()
+        )
+
+        # feat: number of days in last 30 tweets
+        self.tweets_df["num_days_last_30_rows"] = (
+            self.tweets_df["time_diff_days"].rolling(window=30).sum()
+        )
+
+        # feat: mean number of days in last 30 tweets
+        self.tweets_df["mean_days_last_30_rows"] = (
+            self.tweets_df["time_diff_days"].rolling(window=30).mean()
         )
 
         # feat: number of days in last 90 tweets
-        self.tweets_df["days_last_90_rows"] = (
-            self.tweets_df["time_diff"].rolling(window=90).sum()
+        self.tweets_df["num_days_last_90_rows"] = (
+            self.tweets_df["time_diff_days"].rolling(window=90).sum()
+        )
+
+        # feat: mean number of days in last 90 tweets
+        self.tweets_df["mean_days_last_90_rows"] = (
+            self.tweets_df["time_diff_days"].rolling(window=90).mean()
         )
 
         # feat: number of days in last 180 tweets
-        self.tweets_df["days_last_180_rows"] = (
-            self.tweets_df["time_diff"].rolling(window=180).sum()
+        self.tweets_df["num_days_last_180_rows"] = (
+            self.tweets_df["time_diff_days"].rolling(window=180).sum()
+        )
+
+        # feat: mean number of days in last 180 tweets
+        self.tweets_df["mean_days_last_180_rows"] = (
+            self.tweets_df["time_diff_days"].rolling(window=180).mean()
         )
 
         # feat: get how many of the 10 most common words are in a tweet
@@ -134,7 +194,31 @@ class SentimentOfTweets(object):
             "processed_content"
         ].apply(lambda tweet: self.comm_word_count(self.most_comm_words, True, tweet))
 
-        # feat: number of hastags
+        # feat: number of tweets in last 3 days
+        self.tweets_df["num_tweets_last_3_days"] = (
+            self.tweets_df["num_of_tweets"]
+            .resample("d", on="no_hr_date")
+            .sum()
+            .fillna(0)
+            .rolling(window=3)
+            .sum()
+        )
+
+        # feat: mean number of tweets in last 3 days
+
+        # feat: number of tweets in last 7 days
+
+        # feat: mean number of tweets in last 7 days
+
+        # feat: number of tweets in last 14 days
+
+        # feat: mean number of tweets in last 14 days
+
+        # feat: number of tweets in last 50 days
+
+        # feat: mean number of tweets in last 50 days
+
+        # feat: number of hastags in a tweet
         self.tweets_df["hashtag_cnt"] = self.tweets_df["hashtags"].apply(
             lambda tweet: len(tweet.split(",")) if type(tweet) == str else 0
         )
@@ -148,9 +232,43 @@ class SentimentOfTweets(object):
 
         # feat: check if any of the topics are in tweet's hashtag(s)
 
+        # feat: mean hashtag count in last 3 days
+
+        # feat: mean hashtag count in last 7 days
+
+        # feat: mean hashtag count in last 14 days
+
+        # feat: mean hashtag count in last 50 days
+
+        # feat: mean hashtag count in last 3 tweets
+
+        # feat: mean hashtag count in last 5 tweets
+
+        # feat: mean hashtag count in last 10 tweets
+
+        # feat: mean hashtag count in last 50 tweets
+
+        # feat: most used hashtag in last 3 days
+
         # feat: most used hashtag in last 7 days
 
-        # feat: number of mentions
+        # feat: most used hashtag in last 14 days
+
+        # feat: most used hashtag in last 50 days
+
+        # feat: most used hashtag in last 3 tweets
+
+        # feat: most used hashtag in last 5 tweets
+
+        # feat: most used hashtag in last 10 tweets
+
+        # feat: most used hashtag in last 50 tweets
+
+        # feat: unique hashtag count in last 7 days
+
+        # feat: unique hashtag count in last 3 tweets
+
+        # feat: number of mentions in a tweet
         self.tweets_df["mention_cnt"] = self.tweets_df["mentions"].apply(
             lambda tweet: len(tweet.split(",")) if type(tweet) == str else 0
         )
@@ -160,25 +278,85 @@ class SentimentOfTweets(object):
             lambda tweet: self.comm_word_count(self.most_comm_words, False, tweet)
         )
 
-        # feat: number of tweets in last 7 days
+        # feat: most used mention in last 3 days
 
-        # feat: mean number of tweets in last 7 days
+        # feat: most used mention in last 7 days
+
+        # feat: most used mention in last 14 days
+
+        # feat: most used mention in last 50 days
+
+        # feat: mean mention count in last 3 days
+
+        # feat: mean mention count in last 7 days
+
+        # feat: mean mention count in last 14 days
+
+        # feat: mean mention count in last 50 days
 
         # feat: diff b/t number of retweets from previous tweet
         self.tweets_df["RT_diff"] = self.tweets_df["retweets"].diff()
 
+        # feat: number of retweets in last 3 days
+
         # feat: number of retweets in last 7 days
+
+        # feat: number of retweets in last 14 days
+
+        # feat: number of retweets in last 50 days
+
+        # feat: mean number of retweets in last 3 tweets
+
+        # feat: mean number of retweets in last 5 tweets
+
+        # feat: mean number of retweets in last 10 tweets
+
+        # feat: mean number of retweets in last 50 tweets
 
         # feat: diff b/t number of favorites from previous tweet
         self.tweets_df["fav_diff"] = self.tweets_df["favorites"].diff()
 
-        # feat: number of favorites in last 7 days
+        # feat: mean number of favorites in last 3 days
+
+        # feat: mean number of favorites in last 7 days
+
+        # feat: mean number of favorites in last 14 days
+
+        # feat: mean number of favorites in last 50 days
+
+        # feat: mean number of favorites in last 3 tweets
+
+        # feat: mean number of favorites in last 5 tweets
+
+        # feat: mean number of favorites in last 10 tweets
+
+        # feat: mean number of favorites in last 50 tweets
+
+        # feat: number of unique topic in last 7 days
 
         # feat: most used topic in last 3 days
 
         # feat: most used topic in last 7 days
 
+        # feat: most used topic in last 14 days
+
+        # feat: most used topic in last 50 days
+
+        # feat: mean topic last 3 days
+
         # feat: mean topic last 7 days
+
+        # feat: mean topic last 14 days
+
+        # feat: mean topic last 50 days
+
+        # feat: mean topic last 3 tweets
+
+        # feat: mean topic last 5 tweets
+
+        # feat: mean topic last 10 tweets
+
+        # feat: mean topic last 50 tweets
 
         # feat: tweet's subjectivity
         # subjectivity score: opinion vs fact (score is a number between 0.0 and 1.0)
@@ -190,20 +368,47 @@ class SentimentOfTweets(object):
         # feat: diff in subjectivity from previous tweet
         self.tweets_df["subj_diff"] = self.tweets_df["subj_score"].diff()
 
-        # feat: mean subjectivity in last 3 day
-
         # feat: mean subjectivity in last 3 tweets
         self.tweets_df["mean_subj_score_last_3_rows"] = (
             self.tweets_df["subj_diff"].rolling(window=3).mean()
         )
 
+        # feat: mean subjectivity in last 5 tweets
+        self.tweets_df["mean_subj_score_last_5_rows"] = (
+            self.tweets_df["subj_diff"].rolling(window=5).mean()
+        )
+
+        # feat: mean subjectivity in last 10 tweets
+        self.tweets_df["mean_subj_score_last_10_rows"] = (
+            self.tweets_df["subj_diff"].rolling(window=10).mean()
+        )
+
+        # feat: mean subjectivity in last 50 tweets
+        self.tweets_df["mean_subj_score_last_50_rows"] = (
+            self.tweets_df["subj_diff"].rolling(window=50).mean()
+        )
+
+        # feat: highest subjectivity in last 3 tweets
+
+        # feat: highest subjectivity in last 5 tweets
+
+        # feat: highest subjectivity in last 10 tweets
+
+        # feat: highest subjectivity in last 50 tweets
+
         # feat: mean subjectivity in all tweets from previous day
+
+        # feat: mean subjectivity in last 3 day
 
         # feat: mean subjectivity in last 7 day
 
-        # feat: tweet's polarity
+        # feat: mean subjectivity in last 14 day
+
+        # feat: mean subjectivity in last 50 day
+
+        # feat: tweet's polarity (if correlation with target need 3)
         # polarity score: score is a number between -1.0 and 1.0
-        # i.e. 1.0 = very negative, 0 = neutral, and 1 = very positive
+        # i.e. -1.0 = very negative, 0 = neutral, and 1 = very positive
         self.tweets_df["polarity_score"] = self.tweets_df["processed_content"].apply(
             lambda tweet: TextBlob(tweet).sentiment[0]
         )
@@ -211,16 +416,43 @@ class SentimentOfTweets(object):
         # feat: diff in polarity from previous tweet
         self.tweets_df["polarity_diff"] = self.tweets_df["polarity_score"].diff()
 
-        # feat: mean polarity in last 3 day
-
         # feat: mean polarity in last 3 tweets
         self.tweets_df["mean_polarity_score_last_3_rows"] = (
             self.tweets_df["polarity_diff"].rolling(window=3).mean()
         )
 
+        # feat: mean polarity in last 5 tweets
+        self.tweets_df["mean_polarity_score_last_5_rows"] = (
+            self.tweets_df["polarity_diff"].rolling(window=5).mean()
+        )
+
+        # feat: mean polarity in last 10 tweets
+        self.tweets_df["mean_polarity_score_last_10_rows"] = (
+            self.tweets_df["polarity_diff"].rolling(window=10).mean()
+        )
+
+        # feat: mean polarity in last 50 tweets
+        self.tweets_df["mean_polarity_score_last_50_rows"] = (
+            self.tweets_df["polarity_diff"].rolling(window=50).mean()
+        )
+
+        # feat: highest polarity in last 3 tweets
+
+        # feat: highest polarity in last 5 tweets
+
+        # feat: highest polarity in last 10 tweets
+
+        # feat: highest polarity in last 50 tweets
+
         # feat: mean polarity in all tweets from previous day
 
+        # feat: mean polarity in last 3 day
+
         # feat: mean polarity in last 7 day
+
+        # feat: mean polarity in last 14 day
+
+        # feat: mean polarity in last 54 day
 
         # feat: most common words in negative tweets
 
@@ -228,16 +460,29 @@ class SentimentOfTweets(object):
 
         # feat: most common words in positive tweets
 
+        # feat: num of words in tweet that are “pos” keywords
+
+        # feat: num of words in tweet that are “neg” keywords
+
+        # feat: num of words in tweet that are “neu” keywords
+
         # feat: common verbs in tweet
 
         # feat: amount of misspellings
 
         # feat: part of speech in tweet
 
+        # feat: verbs or nouns in tweet
+
         return None
 
     def upsample(self):
         # upsample class distribution
+        pass
+
+    def baseline_model(self):
+        # create dummy model to predict sentiment to compare
+        # real model to
         pass
 
     def train(self):

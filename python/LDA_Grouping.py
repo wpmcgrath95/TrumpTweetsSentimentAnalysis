@@ -189,7 +189,7 @@ class LDAGrouping(object):
             with open(model_dir, "wb") as f:
                 # search parameters to iterate through
                 search_params = {
-                    "n_components": [5, 10, 15, 20],
+                    "n_components": [5, 10, 15, 20],  # TRY [2,3,4,5,10]
                     "learning_decay": [0.5, 0.7, 0.9],
                 }
 

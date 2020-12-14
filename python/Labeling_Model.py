@@ -43,8 +43,12 @@ class LabelingModel(object):
 
         return merged_df
 
+    # SHOULD I REDO FEATS HERE B/C WHEN I CUT OFF THE MID PART THE NUMS IN FEATS
+    # ARE RELATED TO DATA W/O CUTTOFF??
+
     def encoding(self):
         # transformating categ data
+        # need to encode topic and day of week feats
         pass
 
     def upsample(self):
@@ -69,10 +73,6 @@ class LabelingModel(object):
 
     def pipeline(self):
         # add gridsearch to maximize recall
-        pass
-
-    def performance(self):
-        # ROC curve, PPV, TPR, F1
         pass
 
     def main(self):

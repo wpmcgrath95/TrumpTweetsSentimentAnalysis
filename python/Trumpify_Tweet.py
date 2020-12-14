@@ -14,6 +14,7 @@ class TrumpifyTweet(object):
         data_dir = os.path.join(self.this_dir, "../data/twitter_data_with_feats.csv")
         self.tweets_df = pd.read_csv(data_dir, sep=",")
 
+    # just make while loop to get multiple answers and get rid of gui
     def gui(self, model):
         layout = [
             [sg.Text("Please enter a Tweet: ")],
