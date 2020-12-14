@@ -29,6 +29,7 @@ Output: Docker file that can be ran to predict the sentiment behind Trump tweets
         Note: the sentiment being predicted is how Trump feels about the subject
               in the tweet
 """
+import gc
 import os
 import re
 import sys
@@ -194,29 +195,124 @@ class SentimentOfTweets(object):
             "processed_content"
         ].apply(lambda tweet: self.comm_word_count(self.most_comm_words, True, tweet))
 
-        # feat: number of tweets in last 3 days
-        self.tweets_df["num_tweets_last_3_days"] = (
-            self.tweets_df["num_of_tweets"]
-            .resample("d", on="no_hr_date")
+        # feat: number of tweets in last 3 days (maybe add .fillna(0))
+        num_tw_3_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
             .sum()
-            .fillna(0)
             .rolling(window=3)
-            .sum()
+            .sum()["num_of_tweets"]
         )
 
         # feat: mean number of tweets in last 3 days
+        mean_tw_3_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=3)
+            .mean()["num_of_tweets"]
+        )
+        temp_1_df = pd.merge(num_tw_3_df, mean_tw_3_df, how="inner", on=["no_hr_date"])
+        temp_1_df.rename(
+            columns={
+                "num_of_tweets_x": "num_tweets_last_3_days",
+                "num_of_tweets_y": "mean_tweets_last_3_days",
+            },
+            inplace=True,
+        )
 
         # feat: number of tweets in last 7 days
+        num_tw_7_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=7)
+            .sum()["num_of_tweets"]
+        )
+        temp_1_df = pd.merge(temp_1_df, num_tw_7_df, how="inner", on=["no_hr_date"])
 
         # feat: mean number of tweets in last 7 days
+        mean_tw_7_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=7)
+            .mean()["num_of_tweets"]
+        )
+        temp_1_df = pd.merge(temp_1_df, mean_tw_7_df, how="inner", on=["no_hr_date"])
+        temp_1_df.rename(
+            columns={
+                "num_of_tweets_x": "num_tweets_last_7_days",
+                "num_of_tweets_y": "mean_tweets_last_7_days",
+            },
+            inplace=True,
+        )
 
         # feat: number of tweets in last 14 days
+        num_tw_14_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=14)
+            .sum()["num_of_tweets"]
+        )
+        temp_1_df = pd.merge(temp_1_df, num_tw_14_df, how="inner", on=["no_hr_date"])
 
         # feat: mean number of tweets in last 14 days
+        mean_tw_14_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=14)
+            .mean()["num_of_tweets"]
+        )
+        temp_1_df = pd.merge(temp_1_df, mean_tw_14_df, how="inner", on=["no_hr_date"])
+        temp_1_df.rename(
+            columns={
+                "num_of_tweets_x": "num_tweets_last_14_days",
+                "num_of_tweets_y": "mean_tweets_last_14_days",
+            },
+            inplace=True,
+        )
 
         # feat: number of tweets in last 50 days
+        num_tw_50_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=50)
+            .sum()["num_of_tweets"]
+        )
+        temp_1_df = pd.merge(temp_1_df, num_tw_50_df, how="inner", on=["no_hr_date"])
 
         # feat: mean number of tweets in last 50 days
+        mean_tw_50_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=50)
+            .mean()["num_of_tweets"]
+        )
+        temp_1_df = pd.merge(temp_1_df, mean_tw_50_df, how="inner", on=["no_hr_date"])
+        temp_1_df.rename(
+            columns={
+                "num_of_tweets_x": "num_tweets_last_50_days",
+                "num_of_tweets_y": "mean_tweets_last_50_days",
+            },
+            inplace=True,
+        )
+
+        # delete all temp dfs and remove from memory
+        del [
+            [
+                num_tw_3_df,
+                mean_tw_3_df,
+                num_tw_7_df,
+                mean_tw_7_df,
+                num_tw_14_df,
+                mean_tw_14_df,
+                num_tw_50_df,
+                mean_tw_50_df,
+            ]
+        ]
+        gc.collect()
+
+        # merge with main twitter dataframe
+        self.tweets_df = pd.merge(
+            self.tweets_df, temp_1_df, how="inner", on=["no_hr_date"]
+        )
 
         # feat: number of hastags in a tweet
         self.tweets_df["hashtag_cnt"] = self.tweets_df["hashtags"].apply(
