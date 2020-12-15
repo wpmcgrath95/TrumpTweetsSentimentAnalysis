@@ -421,7 +421,7 @@ class SentimentOfTweets(object):
         # feat: unique hashtag count in last 3 tweets
 
         # feat: number of mentions in a tweet
-        self.tweets_df["num_of_mention"] = self.tweets_df["mentions"].apply(
+        self.tweets_df["num_of_mentions"] = self.tweets_df["mentions"].apply(
             lambda tweet: len(tweet.split(",")) if type(tweet) == str else 0
         )
 
@@ -431,12 +431,53 @@ class SentimentOfTweets(object):
         )
 
         # feat: mean mention count in last 3 days
+        mean_mt_3_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=3)
+            .mean()["num_of_mentions"]
+        )
 
         # feat: mean mention count in last 7 days
+        mean_mt_7_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=7)
+            .mean()["num_of_mentions"]
+        )
+        temp_df = pd.merge(mean_mt_3_df, mean_mt_7_df, how="inner", on=["no_hr_date"])
+        temp_df.rename(
+            columns={
+                "num_of_mentions_x": "mean_mention_last_3_days",
+                "num_of_mentions_y": "mean_mention_last_7_days",
+            },
+            inplace=True,
+        )
 
         # feat: mean mention count in last 14 days
+        mean_mt_14_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=14)
+            .mean()["num_of_mentions"]
+        )
+        temp_df = pd.merge(temp_df, mean_mt_14_df, how="inner", on=["no_hr_date"])
 
         # feat: mean mention count in last 50 days
+        mean_mt_50_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=50)
+            .mean()["num_of_mentions"]
+        )
+        temp_df = pd.merge(temp_df, mean_mt_50_df, how="inner", on=["no_hr_date"])
+        temp_df.rename(
+            columns={
+                "num_of_mentions_x": "mean_mention_last_14_days",
+                "num_of_mentions_y": "mean_mention_last_50_days",
+            },
+            inplace=True,
+        )
 
         # feat: most used mention in last 3 days
 
@@ -447,12 +488,24 @@ class SentimentOfTweets(object):
         # feat: most used mention in last 50 days
 
         # feat: mean mention count in last 3 tweets
+        self.tweets_df["mean_mention_last_3_rows"] = (
+            self.tweets_df["num_of_mentions"].rolling(window=3).mean()
+        )
 
         # feat: mean mention count in last 5 tweets
+        self.tweets_df["mean_mention_last_5_rows"] = (
+            self.tweets_df["num_of_mentions"].rolling(window=5).mean()
+        )
 
         # feat: mean mention count in last 10 tweets
+        self.tweets_df["mean_mention_last_10_rows"] = (
+            self.tweets_df["num_of_mentions"].rolling(window=10).mean()
+        )
 
         # feat: mean mention count in last 50 tweets
+        self.tweets_df["mean_mention_last_50_rows"] = (
+            self.tweets_df["num_of_mentions"].rolling(window=50).mean()
+        )
 
         # feat: most used mention in last 3 tweets
 
@@ -462,43 +515,173 @@ class SentimentOfTweets(object):
 
         # feat: unique mention count in last 3 tweets
 
+        # merge with main twitter dataframe
+        self.tweets_df = pd.merge(
+            self.tweets_df, temp_df, how="inner", on=["no_hr_date"]
+        )
+
+        # delete all temp dfs
+        del [[mean_mt_3_df, mean_mt_7_df, mean_mt_14_df, mean_mt_50_df, temp_df]]
+
         # feat: diff b/t number of retweets from previous tweet
         self.tweets_df["RT_diff"] = self.tweets_df["retweets"].diff()
 
         # feat: mean number of retweets in last 3 days
+        mean_rt_3_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=3)
+            .mean()["retweets"]
+        )
 
         # feat: mean number of retweets in last 7 days
+        mean_rt_7_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=7)
+            .mean()["retweets"]
+        )
+        temp_df = pd.merge(mean_rt_3_df, mean_rt_7_df, how="inner", on=["no_hr_date"])
+        temp_df.rename(
+            columns={
+                "retweets_x": "mean_retweet_last_3_days",
+                "retweets_y": "mean_retweet_last_7_days",
+            },
+            inplace=True,
+        )
 
         # feat: mean number of retweets in last 14 days
+        mean_rt_14_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=14)
+            .mean()["retweets"]
+        )
+        temp_df = pd.merge(temp_df, mean_rt_14_df, how="inner", on=["no_hr_date"])
 
         # feat: mean number of retweets in last 50 days
+        mean_rt_50_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=50)
+            .mean()["retweets"]
+        )
+        temp_df = pd.merge(temp_df, mean_rt_50_df, how="inner", on=["no_hr_date"])
+        temp_df.rename(
+            columns={
+                "retweets_x": "mean_retweet_last_14_days",
+                "retweets_y": "mean_retweet_last_50_days",
+            },
+            inplace=True,
+        )
 
         # feat: mean number of retweets in last 3 tweets
+        self.tweets_df["mean_retweet_last_3_rows"] = (
+            self.tweets_df["retweets"].rolling(window=3).mean()
+        )
 
         # feat: mean number of retweets in last 5 tweets
+        self.tweets_df["mean_retweet_last_5_rows"] = (
+            self.tweets_df["retweets"].rolling(window=5).mean()
+        )
 
         # feat: mean number of retweets in last 10 tweets
+        self.tweets_df["mean_retweet_last_10_rows"] = (
+            self.tweets_df["retweets"].rolling(window=10).mean()
+        )
 
         # feat: mean number of retweets in last 50 tweets
+        self.tweets_df["mean_retweet_last_50_rows"] = (
+            self.tweets_df["retweets"].rolling(window=50).mean()
+        )
+
+        # merge with main twitter dataframe
+        self.tweets_df = pd.merge(
+            self.tweets_df, temp_df, how="inner", on=["no_hr_date"]
+        )
+
+        # delete all temp dfs
+        del [[mean_rt_3_df, mean_rt_7_df, mean_rt_14_df, mean_rt_50_df, temp_df]]
 
         # feat: diff b/t number of favorites from previous tweet
         self.tweets_df["fav_diff"] = self.tweets_df["favorites"].diff()
 
         # feat: mean number of favorites in last 3 days
+        mean_fav_3_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=3)
+            .mean()["favorites"]
+        )
 
         # feat: mean number of favorites in last 7 days
+        mean_fav_7_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=7)
+            .mean()["favorites"]
+        )
+        temp_df = pd.merge(mean_fav_3_df, mean_fav_7_df, how="inner", on=["no_hr_date"])
+        temp_df.rename(
+            columns={
+                "favorites_x": "mean_fav_last_3_days",
+                "favorites_y": "mean_fav_last_7_days",
+            },
+            inplace=True,
+        )
 
         # feat: mean number of favorites in last 14 days
+        mean_fav_14_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=14)
+            .mean()["favorites"]
+        )
+        temp_df = pd.merge(temp_df, mean_fav_14_df, how="inner", on=["no_hr_date"])
 
         # feat: mean number of favorites in last 50 days
+        mean_fav_50_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=50)
+            .mean()["favorites"]
+        )
+        temp_df = pd.merge(temp_df, mean_fav_50_df, how="inner", on=["no_hr_date"])
+        temp_df.rename(
+            columns={
+                "favorites_x": "mean_fav_last_14_days",
+                "favorites_y": "mean_fav_last_50_days",
+            },
+            inplace=True,
+        )
 
         # feat: mean number of favorites in last 3 tweets
+        self.tweets_df["mean_fav_last_3_rows"] = (
+            self.tweets_df["favorites"].rolling(window=3).mean()
+        )
 
         # feat: mean number of favorites in last 5 tweets
+        self.tweets_df["mean_fav_last_5_rows"] = (
+            self.tweets_df["favorites"].rolling(window=5).mean()
+        )
 
         # feat: mean number of favorites in last 10 tweets
+        self.tweets_df["mean_fav_last_10_rows"] = (
+            self.tweets_df["favorites"].rolling(window=10).mean()
+        )
 
         # feat: mean number of favorites in last 50 tweets
+        self.tweets_df["mean_fav_last_50_rows"] = (
+            self.tweets_df["favorites"].rolling(window=50).mean()
+        )
+
+        # merge with main twitter dataframe
+        self.tweets_df = pd.merge(
+            self.tweets_df, temp_df, how="inner", on=["no_hr_date"]
+        )
+
+        # delete all temp dfs
+        del [[mean_fav_3_df, mean_fav_7_df, mean_fav_14_df, mean_fav_50_df, temp_df]]
 
         # feat: number of unique topic in last 7 days
 
@@ -527,6 +710,9 @@ class SentimentOfTweets(object):
         # feat: mean topic last 50 days
 
         # feat: mean topic last 3 tweets
+        # self.tweets_df["mean_topic_last_3_rows"] = (
+        #    self.tweets_df["topic"].rolling(window=3).mean()
+        # )
 
         # feat: mean topic last 5 tweets
 
@@ -567,12 +753,55 @@ class SentimentOfTweets(object):
         # feat: mean subjectivity in all tweets from previous day
 
         # feat: mean subjectivity in last 3 days
+        mean_subj_3_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=3)
+            .mean()["subj_score"]
+        )
 
         # feat: mean subjectivity in last 7 days
+        mean_subj_7_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=7)
+            .mean()["subj_score"]
+        )
+        temp_df = pd.merge(
+            mean_subj_3_df, mean_subj_7_df, how="inner", on=["no_hr_date"]
+        )
+        temp_df.rename(
+            columns={
+                "subj_score_x": "mean_subj_last_3_days",
+                "subj_score_y": "mean_subj_last_7_days",
+            },
+            inplace=True,
+        )
 
         # feat: mean subjectivity in last 14 days
+        mean_subj_14_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=14)
+            .mean()["subj_score"]
+        )
+        temp_df = pd.merge(temp_df, mean_subj_14_df, how="inner", on=["no_hr_date"])
 
         # feat: mean subjectivity in last 50 days
+        mean_subj_50_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=50)
+            .mean()["subj_score"]
+        )
+        temp_df = pd.merge(temp_df, mean_subj_50_df, how="inner", on=["no_hr_date"])
+        temp_df.rename(
+            columns={
+                "subj_score_x": "mean_subj_last_14_days",
+                "subj_score_y": "mean_subj_last_50_days",
+            },
+            inplace=True,
+        )
 
         # feat: highest subjectivity in last 3 tweets
 
@@ -584,45 +813,98 @@ class SentimentOfTweets(object):
 
         # feat: highest subjectivity in last 3 days
 
+        # merge with main twitter dataframe
+        self.tweets_df = pd.merge(
+            self.tweets_df, temp_df, how="inner", on=["no_hr_date"]
+        )
+
+        # delete all temp dfs
+        del [
+            [mean_subj_3_df, mean_subj_7_df, mean_subj_14_df, mean_subj_50_df, temp_df]
+        ]
+
         # feat: tweet's polarity (if correlation with target need 3)
         # polarity score: score is a number between -1.0 and 1.0
         # i.e. -1.0 = very negative, 0 = neutral, and 1 = very positive
-        self.tweets_df["polarity_score"] = self.tweets_df["processed_content"].apply(
+        self.tweets_df["poly_score"] = self.tweets_df["processed_content"].apply(
             lambda tweet: TextBlob(tweet).sentiment[0]
         )
 
         # feat: diff in polarity from previous tweet
-        self.tweets_df["polarity_diff"] = self.tweets_df["polarity_score"].diff()
+        self.tweets_df["poly_diff"] = self.tweets_df["poly_score"].diff()
 
         # feat: mean polarity in last 3 tweets
-        self.tweets_df["mean_polarity_score_last_3_rows"] = (
-            self.tweets_df["polarity_diff"].rolling(window=3).mean()
+        self.tweets_df["mean_poly_score_last_3_rows"] = (
+            self.tweets_df["poly_diff"].rolling(window=3).mean()
         )
 
         # feat: mean polarity in last 5 tweets
-        self.tweets_df["mean_polarity_score_last_5_rows"] = (
-            self.tweets_df["polarity_diff"].rolling(window=5).mean()
+        self.tweets_df["mean_poly_score_last_5_rows"] = (
+            self.tweets_df["poly_diff"].rolling(window=5).mean()
         )
 
         # feat: mean polarity in last 10 tweets
-        self.tweets_df["mean_polarity_score_last_10_rows"] = (
-            self.tweets_df["polarity_diff"].rolling(window=10).mean()
+        self.tweets_df["mean_poly_score_last_10_rows"] = (
+            self.tweets_df["poly_diff"].rolling(window=10).mean()
         )
 
         # feat: mean polarity in last 50 tweets
-        self.tweets_df["mean_polarity_score_last_50_rows"] = (
-            self.tweets_df["polarity_diff"].rolling(window=50).mean()
+        self.tweets_df["mean_poly_score_last_50_rows"] = (
+            self.tweets_df["poly_diff"].rolling(window=50).mean()
         )
 
         # feat: mean polarity in all tweets from previous day
 
         # feat: mean polarity in last 3 day
+        mean_poly_3_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=3)
+            .mean()["poly_score"]
+        )
 
         # feat: mean polarity in last 7 day
+        mean_poly_7_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=7)
+            .mean()["poly_score"]
+        )
+        temp_df = pd.merge(
+            mean_poly_3_df, mean_poly_7_df, how="inner", on=["no_hr_date"]
+        )
+        temp_df.rename(
+            columns={
+                "poly_score_x": "mean_poly_last_3_days",
+                "poly_score_y": "mean_poly_last_7_days",
+            },
+            inplace=True,
+        )
 
         # feat: mean polarity in last 14 day
+        mean_poly_14_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=14)
+            .mean()["poly_score"]
+        )
+        temp_df = pd.merge(temp_df, mean_poly_14_df, how="inner", on=["no_hr_date"])
 
         # feat: mean polarity in last 50 day
+        mean_poly_50_df = (
+            self.tweets_df.resample("D", on="no_hr_date")
+            .sum()
+            .rolling(window=50)
+            .mean()["poly_score"]
+        )
+        temp_df = pd.merge(temp_df, mean_poly_50_df, how="inner", on=["no_hr_date"])
+        temp_df.rename(
+            columns={
+                "poly_score_x": "mean_poly_last_14_days",
+                "poly_score_y": "mean_poly_last_50_days",
+            },
+            inplace=True,
+        )
 
         # feat: highest polarity in last 3 tweets
 
@@ -633,6 +915,16 @@ class SentimentOfTweets(object):
         # feat: highest polarity in last 50 tweets
 
         # feat: highest polarity in last 3 days
+
+        # merge with main twitter dataframe
+        self.tweets_df = pd.merge(
+            self.tweets_df, temp_df, how="inner", on=["no_hr_date"]
+        )
+
+        # delete all temp dfs
+        del [
+            [mean_poly_3_df, mean_poly_7_df, mean_poly_14_df, mean_poly_50_df, temp_df]
+        ]
 
         # feat: most common words in negative tweets
 

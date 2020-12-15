@@ -261,8 +261,8 @@ class LDAGrouping(object):
             lambda t: topics[t]
         )
 
-        print(topic_keywords_df)
-        print(doc_topic_df)
+        # print(topic_keywords_df)
+        # print(doc_topic_df)
         return topics, doc_topic_df
 
     def performance(self, count_data, model):
