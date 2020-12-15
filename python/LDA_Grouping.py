@@ -30,8 +30,8 @@ class LDAGrouping(object):
         data_dir = os.path.join(self.this_dir, "../data/realdonaldtrump.csv")
         self.tweets_df = pd.read_csv(data_dir, sep=",")
 
-    def process_tweets(self):
-        # ETL procedure
+    def preprocess_tweets(self):
+        # clean and preprocess tweet content
         # convert to lowercase letters
         self.tweets_df["content_pro"] = self.tweets_df["content"].map(
             lambda x: x.lower()
@@ -281,8 +281,8 @@ class LDAGrouping(object):
         # set seed
         np.random.seed(2)
 
-        # processed data
-        self.process_tweets()
+        # preprocess tweets
+        self.preprocess_tweets()
 
         # word cloud
         word_cloud_img = os.path.join(self.this_dir, "../plots/word_cloud.png")
@@ -292,7 +292,7 @@ class LDAGrouping(object):
         # initialise the count vectorizer with English stop words
         count_vectorizer = CountVectorizer(stop_words="english")
 
-        # fit and transform processed tweets (counts the number of each word in vector)
+        # fit and transform preprocessed tweets (counts the num of each word in vector)
         count_data = count_vectorizer.fit_transform(self.tweets_df["content_pro"])
 
         # most common words

@@ -41,6 +41,7 @@ import webbrowser
 import numpy as np
 import pandas as pd
 from LDA_Grouping import LDAGrouping
+from sklearn.preprocessing import OneHotEncoder
 from textblob import TextBlob
 
 pd.set_option("display.max_columns", None)
@@ -951,23 +952,37 @@ class SentimentOfTweets(object):
 
         return None
 
-    def upsample(self):
-        # upsample class distribution
-        pass
+    def preprocess_feats(self):
+        # clean and preprocess rest of feats (tweets are processed)
+        # need to drop mentions and hashtags feats before imputation
+        self.tweets_df.drop(["mentions", "hashtags"], axis=1, inplace=True)
 
-    def baseline_model(self):
-        # create dummy model to predict sentiment to compare
-        # real model to
-        pass
+        # set index to date
+        self.tweets_df.set_index("no_hr_date", inplace=True)
 
-    def train(self):
-        # drop ids
-        pass
+        # imputation (i.e. replacing missing values in usable feats)
+        # might want to just use .fillna(method='bfill')
+        # since time-series using observed vals after date
+        self.tweets_df = self.tweets_df.interpolate(method="time").bfill()
 
-    def performance(self):
-        # ROC curve, PPV, TPR, F1, SHAP values
-        # test multicorrelation using VIF
-        pass
+        # reset index
+        self.tweets_df.reset_index(inplace=True)
+
+        # check if feats have any more missing values
+        na_list = self.tweets_df.columns[self.tweets_df.isna().any()].tolist()
+        assert len(na_list) == 0, "List is not empty"
+
+        return None
+
+    def encode(self):
+        # transform categorical feats
+        categ_cols = ["topic", "day_of_week"]
+        enc_df = pd.DataFrame(
+            OneHotEncoder().fit_transform(self.tweets_df[categ_cols]).toarray()
+        )
+        self.tweets_df = self.tweets_df.join(enc_df)
+
+        return None
 
     def main(self):
         # set seed
@@ -979,10 +994,13 @@ class SentimentOfTweets(object):
         # remove temp dataframes from memory
         gc.collect()
 
-        # need to add to target
-        # response variable (need to predict) and count
-        # self.tweets_df["target"] = ""
-        # print(f"Target Value Count: {self.tweets_df['target'].value_counts()}")
+        # preprocessing feats (i.e. deal with missing data)
+        self.preprocess_feats()
+
+        # one hot encoding categorical cols
+        self.encode()
+
+        # final dataset shape before training
         print(
             f"Dataset:[{self.tweets_df.shape[0]} rows x {self.tweets_df.shape[1]} cols]"
         )

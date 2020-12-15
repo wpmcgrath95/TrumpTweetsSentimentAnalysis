@@ -28,7 +28,7 @@ class LabelingModel(object):
         self.this_dir = os.path.dirname(os.path.realpath(__file__))
 
     def merge_data(self):
-        # load the non-labeled data with feats and labeled data
+        # load the non-labeled data with feats and labeled data (adds target)
         data_dir = os.path.join(self.this_dir, "../data")
         feat_data_dir = os.path.join(data_dir, "twitter_data_with_feats.csv")
         labeled_data_dir = os.path.join(data_dir, "labeled_realdonaldtrump.csv")
@@ -41,7 +41,7 @@ class LabelingModel(object):
         # merge dataframes
         merged_df = pd.merge(feat_data_df, labeled_data_df, how="inner", on=["link"])
 
-        # drop rows with NaN
+        # drop rows with NaN targets (non-labeled)
         merged_df = merged_df[pd.notnull(merged_df["target"])].reset_index(drop=True)
 
         return merged_df
@@ -50,9 +50,11 @@ class LabelingModel(object):
         # upsample class distribution
         pass
 
-    def baseline_model(self):
-        # create dummy model to predict sentiment to compare
-        # real model to
+    def train_test_split(self):
+        # drop non-used cols for training
+
+        # train and test split
+
         pass
 
     def train(self, df):
@@ -71,11 +73,21 @@ class LabelingModel(object):
 
         return xgb_model
 
+    def baseline_model(self):
+        # create dummy model to pred sentiment to compare real model to
+        # don't need
+        pass
+
+    def performance(self):
+        # ROC curve, PPV, TPR, F1, SHAP values
+        # test multicorrelation using VIF
+        pass
+
     def main(self):
+        # response variable distribution
         merged_df = self.merge_data()
-        print(merged_df)
-        print(merged_df["target"].value_counts())
-        print(merged_df["target"].isna().sum())
+        print(f"Target Value Count: {merged_df['target'].value_counts()}")
+        print(f"Target N/A Count: {merged_df['target'].isna().sum()}")
 
         # save merged df with feats and target to csv in data folder
         merged_dir = os.path.join(
