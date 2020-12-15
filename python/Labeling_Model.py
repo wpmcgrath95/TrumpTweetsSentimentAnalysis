@@ -10,6 +10,9 @@
          twitter_data_with_feats.csv and then get rid of
          non-labeled tweets
 3. use this model to predict the rest of the tweets
+
+Note: SHOULD I REDO FEATS HERE B/C WHEN I CUT OFF THE MID PART THE NUMS IN FEATS
+      ARE RELATED TO DATA W/O CUTTOFF??
 """
 import os
 import sys
@@ -42,9 +45,6 @@ class LabelingModel(object):
         merged_df = merged_df[pd.notnull(merged_df["target"])].reset_index(drop=True)
 
         return merged_df
-
-    # SHOULD I REDO FEATS HERE B/C WHEN I CUT OFF THE MID PART THE NUMS IN FEATS
-    # ARE RELATED TO DATA W/O CUTTOFF??
 
     def encoding(self):
         # transformating categ data
@@ -87,7 +87,7 @@ class LabelingModel(object):
         )
         merged_df.to_csv(merged_dir, encoding="utf-8", index=False)
 
-        return
+        return None
 
 
 if __name__ == "__main__":
