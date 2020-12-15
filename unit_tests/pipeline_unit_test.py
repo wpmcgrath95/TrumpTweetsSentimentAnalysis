@@ -4,11 +4,11 @@
 import unittest
 
 
-class LabelingModelUnitTest(unittest.TestCase):
+class PipelineUnitTest(unittest.TestCase):
     def test_something(self):
         self.assertEqual(True, False)
 
-        # test if files merged correctly
+        # test pipeline
 
 
 if __name__ == "__main__":

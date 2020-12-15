@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# BDA 696 Final Project
+# Create by: Will McGrath
 import unittest
 
 

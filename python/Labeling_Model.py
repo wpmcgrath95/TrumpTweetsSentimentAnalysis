@@ -46,13 +46,13 @@ class LabelingModel(object):
 
         return merged_df
 
-    def encoding(self):
-        # transformating categ data
-        # need to encode topic and day of week feats
-        pass
-
     def upsample(self):
         # upsample class distribution
+        pass
+
+    def baseline_model(self):
+        # create dummy model to predict sentiment to compare
+        # real model to
         pass
 
     def train(self, df):
@@ -70,10 +70,6 @@ class LabelingModel(object):
         xgb_model = xgb.XGBClassifier()
 
         return xgb_model
-
-    def pipeline(self):
-        # add gridsearch to maximize recall
-        pass
 
     def main(self):
         merged_df = self.merge_data()

@@ -3,7 +3,9 @@
 # Create by: Will McGrath
 
 """
-Input: Donald Trump tweets up to June 2020
+Prototype model
+
+Input: Donald Trump Tweets up to June 2020
 
 Description:
     1. choose 100 random tweets and label them (label Tweets that are new and some old)
@@ -24,7 +26,8 @@ Description:
 Plots:
      - plot polarity vs subj distr
 
-Output: Docker file that can be ran to predict the sentiment behind Trump tweets
+Output: Sentiment predictions on Trump Tweets
+        - used Docker file
         - add a volumn to Docker and output all plots and stuff to folder in vol
         Note: the sentiment being predicted is how Trump feels about the subject
               in the tweet
@@ -959,10 +962,6 @@ class SentimentOfTweets(object):
 
     def train(self):
         # drop ids
-        pass
-
-    def pipeline(self):
-        # add gridsearch to maximize recall
         pass
 
     def performance(self):
