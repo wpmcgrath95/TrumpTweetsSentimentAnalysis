@@ -8,3 +8,4 @@ seaborn
 pyLDAvis
 xgboost
 fastai
+category_encoders

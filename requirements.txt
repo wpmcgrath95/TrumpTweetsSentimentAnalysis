@@ -7,6 +7,7 @@
 attrs==20.3.0             # via pytest
 blis==0.7.4               # via spacy, thinc
 catalogue==1.0.0          # via spacy, thinc
+category-encoders==2.2.2  # via -r requirements.in
 certifi==2020.12.5        # via requests
 chardet==3.0.4            # via requests
 click==7.1.2              # via nltk
@@ -28,9 +29,10 @@ matplotlib==3.3.3         # via -r requirements.in, fastai, seaborn, wordcloud
 murmurhash==1.0.5         # via preshed, spacy, thinc
 nltk==3.5                 # via textblob
 numexpr==2.7.1            # via pyldavis
-numpy==1.18.4             # via -r requirements.in, blis, fastprogress, matplotlib, numexpr, pandas, pyldavis, scikit-learn, scipy, seaborn, spacy, thinc, torch, torchvision, wordcloud, xgboost
+numpy==1.18.4             # via -r requirements.in, blis, category-encoders, fastprogress, matplotlib, numexpr, pandas, patsy, pyldavis, scikit-learn, scipy, seaborn, spacy, statsmodels, thinc, torch, torchvision, wordcloud, xgboost
 packaging==20.7           # via fastai, fastcore, pytest
-pandas==1.1.4             # via -r requirements.in, fastai, pyldavis, seaborn
+pandas==1.1.4             # via -r requirements.in, category-encoders, fastai, pyldavis, seaborn, statsmodels
+patsy==0.5.1              # via category-encoders, statsmodels
 pillow==8.0.1             # via fastai, matplotlib, torchvision, wordcloud
 plac==1.1.3               # via spacy, thinc
 pluggy==0.13.1            # via pytest
@@ -44,13 +46,14 @@ pytz==2020.4              # via pandas
 pyyaml==5.3.1             # via fastai
 regex==2020.11.13         # via nltk
 requests==2.25.0          # via fastai, spacy
-scikit-learn==0.23.2      # via fastai, sklearn
-scipy==1.5.4              # via fastai, pyldavis, scikit-learn, seaborn, xgboost
+scikit-learn==0.23.2      # via category-encoders, fastai, sklearn
+scipy==1.5.4              # via category-encoders, fastai, pyldavis, scikit-learn, seaborn, statsmodels, xgboost
 seaborn==0.11.0           # via -r requirements.in
-six==1.15.0               # via cycler, python-dateutil
+six==1.15.0               # via cycler, patsy, python-dateutil
 sklearn==0.0              # via -r requirements.in
 spacy==2.3.4              # via fastai
 srsly==1.0.5              # via spacy, thinc
+statsmodels==0.12.1       # via category-encoders
 textblob==0.15.3          # via -r requirements.in
 thinc==7.4.4              # via spacy
 threadpoolctl==2.1.0      # via scikit-learn

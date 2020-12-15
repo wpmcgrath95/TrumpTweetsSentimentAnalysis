@@ -41,8 +41,12 @@ class LabelingModel(object):
         # merge dataframes
         merged_df = pd.merge(feat_data_df, labeled_data_df, how="inner", on=["link"])
 
-        # drop rows with NaN targets (non-labeled)
+        # drop target rows with NaN or missing vals (non-labeled)
         merged_df = merged_df[pd.notnull(merged_df["target"])].reset_index(drop=True)
+
+        # drop all unusable cols
+        drop_cols = ["no_hr_date", "id", "link", "content", "date", "processed_content"]
+        merged_df.drop(drop_cols, axis=1, inplace=True)
 
         return merged_df
 
@@ -58,7 +62,6 @@ class LabelingModel(object):
         pass
 
     def train(self, df):
-        # drop ids
         # define X = predictors and y = response vars
         X = df.iloc[:, 2:-1]
         y = df.iloc[:, -1]
@@ -84,9 +87,14 @@ class LabelingModel(object):
         pass
 
     def main(self):
-        # response variable distribution
+        # create merged dataset
         merged_df = self.merge_data()
-        print(f"Target Value Count: {merged_df['target'].value_counts()}")
+
+        # final dataset shape before training
+        print(f"Dataset:[{merged_df.shape[0]} rows x {merged_df.shape[1]} cols]")
+
+        # response variable distr
+        print(f"Target Value Count: \n {merged_df['target'].value_counts()}")
         print(f"Target N/A Count: {merged_df['target'].isna().sum()}")
 
         # save merged df with feats and target to csv in data folder

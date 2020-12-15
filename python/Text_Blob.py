@@ -38,10 +38,10 @@ import re
 import sys
 import webbrowser
 
+import category_encoders as ce
 import numpy as np
 import pandas as pd
 from LDA_Grouping import LDAGrouping
-from sklearn.preprocessing import OneHotEncoder
 from textblob import TextBlob
 
 pd.set_option("display.max_columns", None)
@@ -977,10 +977,12 @@ class SentimentOfTweets(object):
     def encode(self):
         # transform categorical feats
         categ_cols = ["topic", "day_of_week"]
-        enc_df = pd.DataFrame(
-            OneHotEncoder().fit_transform(self.tweets_df[categ_cols]).toarray()
-        )
-        self.tweets_df = self.tweets_df.join(enc_df)
+
+        # define encoder
+        enc = ce.OneHotEncoder(cols=categ_cols, use_cat_names=True)
+
+        # transform categ cols and replaces old ones
+        self.tweets_df = enc.fit_transform(self.tweets_df)
 
         return None
 
@@ -1000,7 +1002,7 @@ class SentimentOfTweets(object):
         # one hot encoding categorical cols
         self.encode()
 
-        # final dataset shape before training
+        # final dataset shape
         print(
             f"Dataset:[{self.tweets_df.shape[0]} rows x {self.tweets_df.shape[1]} cols]"
         )
