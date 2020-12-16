@@ -17,6 +17,9 @@ Description:
     5. build model on prev stuff and make that ground truth for unsup model
     6. transforming data like box-cox, and scale data (standardize) to improve perf
         try checking for importance, and multicorrelation (use VIF)
+        - mean of response and feat impt are used to do same thing...rank order
+        - mean of response is used to see how prob of resp changes
+        - brute force used to combine and make new feats (kind like permuta)
     7. then use PCA
     8. then unsupervised model (k-means) and check perf of ones you labeled or
         can try SVM (use bi-grams)

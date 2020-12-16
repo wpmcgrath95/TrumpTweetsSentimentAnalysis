@@ -67,7 +67,7 @@ class TrumpifyTweet(object):
 
         # predict sentence
         pred_output = lstm_model.predict(input_tweet, num_add_words)
-        # self.gui(lstm_model)
+        self.gui(lstm_model)
 
         return pred_output
 
