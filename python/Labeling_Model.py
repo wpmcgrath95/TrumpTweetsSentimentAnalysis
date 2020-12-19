@@ -17,21 +17,25 @@ Note: SHOULD I REDO FEATS HERE B/C WHEN I CUT OFF THE MID PART THE NUMS IN FEATS
 import os
 import sys
 import warnings
+from itertools import cycle
 
 import _pickle as cPickle
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import shap
 import xgboost as xgb
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn import preprocessing
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
+from sklearn.inspection import permutation_importance
+from sklearn.metrics import auc, classification_report, roc_curve
 from sklearn.model_selection import (RepeatedStratifiedKFold, cross_validate,
                                      train_test_split)
+from sklearn.preprocessing import label_binarize
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -112,6 +116,7 @@ class LabelingModel(object):
     def feat_importance(self, model, X_test):
         # feature importance
         feat_impt = {}  # dict to hold feature_name: feature_importance
+        fig, ax = plt.subplots(figsize=(10, 10))
         for feat, impt in zip(X_test, model.feature_importances_):
             feat_impt[feat] = impt
 
@@ -119,27 +124,155 @@ class LabelingModel(object):
             feat_impt_df = pd.DataFrame.from_dict(feat_impt, orient="index").rename(
                 columns={0: "Gini-importance"}
             )
-            # feat_impt_df.sort_values(by='Gini-importance').plot(kind='bar', rot=45)
+
+            # plot RandomForest feature importance and save
             feat_impt_df = feat_impt_df["Gini-importance"].sort_values(ascending=False)
+            feat_impt_df[0:15].plot(kind="bar", rot=90, ax=plt.gca())
+            plt.title("RandomForest Feature Importance")
+            plt.xlabel("Top 15 Features")
+            plt.ylabel("Ranked Gini-importance")
+
+            rf_feat_impt_plt = os.path.join(self.this_dir, "../plots/rf_feat_impt.png")
+            fig.savefig(rf_feat_impt_plt, bbox_inches="tight")
 
         else:
             feat_impt_df = pd.DataFrame.from_dict(feat_impt, orient="index").rename(
                 columns={0: "Gain"}
             )
 
-            # a = os.path.join(self.this_dir, "../plots/xgb_feat_impt.png")
-            # fig = feat_impt_df.sort_values(by='Gain').plot(kind='bar', rot=45)
-            # fig.get_figure()
-            # fig.savefig(a)
-            # feat_impt_df.sort_values(by='Gain').plot(kind='bar', rot=45)
-            # sorted_idx = model.feature_importances_.argsort()
-            # plt.barh(model.get_booster().feature_names[sorted_idx],
-            #          model.feature_importances_[sorted_idx])
-            # plt.xlabel("Xgboost Feature Importance")
-            # plt.show()
+            # plot XGBoost feature importance and save
             feat_impt_df = feat_impt_df["Gain"].sort_values(ascending=False)
+            feat_impt_df[0:15].plot(kind="bar", rot=90, ax=plt.gca())
+            plt.title("XGBoost Feature Importance")
+            plt.xlabel("Top 15 Features")
+            plt.ylabel("Ranked Average Gain")
 
-        return feat_impt_df
+            xgb_feat_impt_plt = os.path.join(
+                self.this_dir, "../plots/xgb_feat_impt.png"
+            )
+            fig.savefig(xgb_feat_impt_plt, bbox_inches="tight")
+
+        return None
+
+    def shap_plot(self, model, X_test, name):
+        fig, ax = plt.subplots(figsize=(10, 10))
+
+        # another feature importance plot
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(X_test)
+        shap.summary_plot(shap_values, X_test, show=False)
+
+        plt_name = f"../plots/{name}_shap_plot.png"
+        shap_plt = os.path.join(self.this_dir, plt_name)
+        fig.savefig(shap_plt, bbox_inches="tight")
+
+        return None
+
+    def permutation_plots(self, X_test, y_test, model, name):
+        # randomly shuffle feats and computes change in model's perf
+        # feats that impact the perf the most are the most import one
+        fig, ax = plt.subplots(figsize=(10, 10))
+        perm_impt = permutation_importance(
+            model, X_test, y_test, n_repeats=10, random_state=42
+        )
+
+        # rank
+        sorted_idx = perm_impt.importances_mean.argsort()[0:15]
+
+        # box plot
+        ax.boxplot(
+            perm_impt.importances[sorted_idx].T,
+            vert=False,
+            labels=X_test.columns[sorted_idx],
+        )
+        ax.set_title("Top 15 Permutation Importances")
+
+        plt_name = f"../plots/{name}_perm_impt.png"
+        perm_impt_plt = os.path.join(self.this_dir, plt_name)
+        fig.savefig(perm_impt_plt, bbox_inches="tight")
+
+        return None
+
+    def roc_curve(self, X_test, y_test, model, name):
+        # predict probability and labelize
+        y_score = model.predict_proba(X_test)
+        y_test_bin = label_binarize(y_test, classes=[0, 1, 2])
+        n_classes = y_test_bin.shape[1]
+
+        # compute ROC curve and ROC area for each class
+        fpr = dict()
+        tpr = dict()
+        roc_auc = dict()
+        for i in range(n_classes):
+            fpr[i], tpr[i], _ = roc_curve(y_test_bin[:, i], y_score[:, i])
+            roc_auc[i] = auc(fpr[i], tpr[i])
+
+        # compute micro-average ROC curve and ROC area
+        fpr["micro"], tpr["micro"], _ = roc_curve(y_test_bin.ravel(), y_score.ravel())
+        roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+
+        # aggregate all false positive rates
+        all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+
+        # interpolate all ROC curves at this points
+        mean_tpr = np.zeros_like(all_fpr)
+        for i in range(n_classes):
+            mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+
+        # average it and compute AUC
+        mean_tpr /= n_classes
+
+        fpr["macro"] = all_fpr
+        tpr["macro"] = mean_tpr
+        roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+        # Plot all ROC curves
+        plt.figure()
+        plt.plot(
+            fpr["micro"],
+            tpr["micro"],
+            label="Micro-average ROC curve (area = {0:0.2f})"
+            "".format(roc_auc["micro"]),
+            color="deeppink",
+            linestyle=":",
+            linewidth=4,
+        )
+
+        plt.plot(
+            fpr["macro"],
+            tpr["macro"],
+            label="Macro-average ROC curve (area = {0:0.2f})"
+            "".format(roc_auc["macro"]),
+            color="navy",
+            linestyle=":",
+            linewidth=4,
+        )
+
+        colors = cycle(["aqua", "darkorange", "cornflowerblue"])
+        for i, color in zip(range(n_classes), colors):
+            plt.plot(
+                fpr[i],
+                tpr[i],
+                color=color,
+                lw=2,
+                label="ROC curve of class {0} (area = {1:0.2f})"
+                "".format(i, roc_auc[i]),
+            )
+
+        plt.plot([0, 1], [0, 1], "k--", lw=2)
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel("False Positive Rate")
+        plt.ylabel("True Positive Rate")
+        plt.title("Receiver Operating Characteristic (ROC) Curve")
+        plt.legend(loc="lower right")
+
+        # save plot
+        plt_name = f"../plots/{name}_roc_curve.png"
+        roc_curve_plt = os.path.join(self.this_dir, plt_name)
+        plt.savefig(roc_curve_plt, bbox_inches="tight")
+
+        return None
 
     def corr_matrix(self, df):
         # only shows correlation between numerical features
@@ -220,6 +353,7 @@ class LabelingModel(object):
         print(f"{name} w/SMOTE Recall-Macro: {np.mean(scores['test_rec_macro'])}")
         print(f"{name} w/SMOTE f1-Macro: {np.mean(scores['test_f1_macro'])}")
         print(f"{name} w/SMOTE ROC-Macro: {np.mean(scores['test_roc_auc_ovr'])}")
+        print(f"{name} w/SMOTE ROC-Macro: {scores['test_roc_auc_ovr']}")
 
         print(f"{name} Accuracy Length: {len(scores_no_smote['test_acc'])}")
         print(f"{name} Accuracy: {np.mean(scores_no_smote['test_acc'])}")
@@ -277,12 +411,22 @@ class LabelingModel(object):
         print(classification_report(y_test, rf_y_hat))
 
         # feature importance using RandomForest
-        rf_feat_impt_df = self.feat_importance(rf_pipeline["model"], X_test)
-        print(rf_feat_impt_df)
+        self.feat_importance(rf_pipeline["model"], X_test)
 
         # feature importance using XGBoost
-        xgb_feat_impt_df = self.feat_importance(xgb_pipeline["model"], X_test)
-        print(xgb_feat_impt_df)
+        self.feat_importance(xgb_pipeline["model"], X_test)
+
+        # shap plots
+        self.shap_plot(rf_pipeline["model"], X_test, "rf")
+        self.shap_plot(xgb_pipeline["model"], X_test, "xgb")
+
+        # permutation importance plots
+        self.permutation_plots(X_test, y_test, rf_pipeline["model"], "rf")
+        self.permutation_plots(X_test, y_test, xgb_pipeline["model"], "xgb")
+
+        # ROC curves
+        self.roc_curve(X_test, y_test, xgb_pipeline, "xgb")
+        self.roc_curve(X_test, y_test, rf_pipeline, "rf")
 
         # correlation matrix
         self.corr_matrix(merged_df)

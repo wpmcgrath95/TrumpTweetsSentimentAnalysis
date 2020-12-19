@@ -10,3 +10,4 @@ xgboost
 fastai
 category_encoders
 imbalanced-learn
+shap
