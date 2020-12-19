@@ -35,6 +35,9 @@ Output: Sentiment predictions on Trump Tweets
         Note: the sentiment being predicted is how Trump feels about the subject
               in the tweet
 """
+
+# check if realdonaldtrump in tweet content (due to retweet)
+
 import gc
 import os
 import re

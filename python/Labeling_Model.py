@@ -16,14 +16,25 @@ Note: SHOULD I REDO FEATS HERE B/C WHEN I CUT OFF THE MID PART THE NUMS IN FEATS
 """
 import os
 import sys
+import warnings
 
+import _pickle as cPickle
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import xgboost as xgb
+from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import Pipeline
+from imblearn.under_sampling import RandomUnderSampler
+from sklearn import preprocessing
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import cross_validate
 from sklearn.model_selection import train_test_split
+
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class LabelingModel(object):
@@ -52,6 +63,12 @@ class LabelingModel(object):
         drop_cols = ["no_hr_date", "id", "link", "content", "date", "processed_content"]
         merged_df.drop(drop_cols, axis=1, inplace=True)
 
+        # encode laebels (0 = -1, 1 = 1, 2 = 1)
+        label_encoder = preprocessing.LabelEncoder()
+
+        # transform labels and replace
+        merged_df["target"] = label_encoder.fit_transform(merged_df["target"])
+
         return merged_df
 
     def save_data(self, df, path):
@@ -61,9 +78,19 @@ class LabelingModel(object):
 
         return None
 
-    def upsample(self):
-        # upsample class distribution
-        pass
+    def save_load_pipeline(self, X_train, y_train, model, path):
+        # save model
+        model_dir = os.path.join(self.this_dir, path)
+        try:
+            with open(model_dir, "rb") as f:
+                pipeline = cPickle.load(f)
+
+        except FileNotFoundError:
+            with open(model_dir, "wb") as f:
+                pipeline = self.over_sampling_smote(X_train, y_train, model)
+                cPickle.dump(pipeline, f)
+
+        return pipeline
 
     def train_test_split(self, df):
         # train and test split
@@ -76,27 +103,12 @@ class LabelingModel(object):
             X, y, test_size=0.20, random_state=42
         )
 
-        return X_train, X_test, y_train, y_test
+        return X, y, X_train, X_test, y_train, y_test
 
     def baseline_model(self):
         # create dummy model to pred sentiment to compare real model to
         # don't need
         pass
-
-    def performance(self, model, X_train, X_test, y_test):
-        # predict target on train and test set
-        predict_train = model.predict(X_train)
-        predict_test = model.predict(X_test)
-
-        # get accuracy
-        accuracy = model.score(X_test, y_test)
-        print(predict_train)
-        print(predict_test)
-
-        # ROC curve, PPV, TPR, F1, SHAP values
-        # test multicorrelation using VIF
-
-        return accuracy
 
     def feat_importance(self, model, X_test):
         # feature importance
@@ -121,12 +133,18 @@ class LabelingModel(object):
             # fig.get_figure()
             # fig.savefig(a)
             # feat_impt_df.sort_values(by='Gain').plot(kind='bar', rot=45)
+            # sorted_idx = model.feature_importances_.argsort()
+            # plt.barh(model.get_booster().feature_names[sorted_idx],
+            #          model.feature_importances_[sorted_idx])
+            # plt.xlabel("Xgboost Feature Importance")
+            # plt.show()
             feat_impt_df = feat_impt_df["Gain"].sort_values(ascending=False)
 
         return feat_impt_df
 
     def corr_matrix(self, df):
         # only shows correlation between numerical features
+        # test multicorrelation using VIF
         correlations = df.corr(method="pearson")
 
         y_name = "target"
@@ -154,6 +172,66 @@ class LabelingModel(object):
 
         return None
 
+    def over_sampling_smote(self, X_train, y_train, model):
+        # oversampling class distribution
+        # transform the dataset
+        # before SMOTE: 2 = 289, 1 = 120, 0 = 32
+        over = SMOTE(sampling_strategy={0: 60}, random_state=0)
+        under = RandomUnderSampler(sampling_strategy={2: 120})
+
+        steps = [("o", over), ("u", under), ("model", model)]
+        pipeline = Pipeline(steps=steps)
+
+        # fit dataset
+        pipeline.fit(X_train, y_train)
+
+        # fit dataset
+        # smote_X, smote_y = pipeline.fit_resample(X, y)
+        # print(f"Target w/SMOTE Value Count: \n {smote_y.value_counts()}")
+
+        return pipeline
+
+    def evaluate_model(self, X, y, pipeline, model, name):
+        # define evaluation procedure
+        # 20% of the data is used for testing
+        cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=3, random_state=1)
+
+        # evaluate model
+        # default roc is macro
+        scoring = {
+            "acc": "accuracy",
+            "prec_macro": "precision_macro",
+            "rec_macro": "recall_macro",
+            "f1_macro": "f1_macro",
+            "roc_auc_ovr": "roc_auc_ovr",
+        }
+
+        scores = cross_validate(
+            pipeline, X, y, scoring=scoring, cv=cv, n_jobs=-1, return_train_score=False
+        )
+        scores_no_smote = cross_validate(
+            model, X, y, scoring=scoring, cv=cv, n_jobs=-1, return_train_score=False
+        )
+
+        # summarize performance
+        print(f"{name} w/SMOTE Accuracy Length: {len(scores['test_acc'])}")
+        print(f"{name} w/SMOTE Accuracy: {np.mean(scores['test_acc'])}")
+        print(f"{name} w/SMOTE STD: {np.std(scores['test_acc'])}")
+        print(f"{name} w/SMOTE Precision-Macro: {np.mean(scores['test_prec_macro'])}")
+        print(f"{name} w/SMOTE Recall-Macro: {np.mean(scores['test_rec_macro'])}")
+        print(f"{name} w/SMOTE f1-Macro: {np.mean(scores['test_f1_macro'])}")
+        print(f"{name} w/SMOTE ROC-Macro: {np.mean(scores['test_roc_auc_ovr'])}")
+
+        print(f"{name} Accuracy Length: {len(scores_no_smote['test_acc'])}")
+        print(f"{name} Accuracy: {np.mean(scores_no_smote['test_acc'])}")
+        print(f"{name} STD: {np.std(scores_no_smote['test_acc'])}")
+        print(f"{name} Precision-Macro: {np.mean(scores_no_smote['test_prec_macro'])}")
+        print(f"{name} Recall-Macro: {np.mean(scores_no_smote['test_rec_macro'])}")
+        print(f"{name} f1-Macro: {np.mean(scores_no_smote['test_f1_macro'])}")
+        print(f"{name} ROC-Macro: {np.mean(scores_no_smote['test_roc_auc_ovr'])}")
+
+        return None
+
     def main(self):
         # set seed
         np.random.seed(seed=1)
@@ -173,40 +251,48 @@ class LabelingModel(object):
         print(f"Target N/A Count: {merged_df['target'].isna().sum()}")
 
         # split the data into train and test set
-        X_train, X_test, y_train, y_test = self.train_test_split(merged_df)
+        X, y, X_train, X_test, y_train, y_test = self.train_test_split(merged_df)
 
         # create RandomForest and XGBoost models
-        rf_model = RandomForestClassifier(random_state=0)
-        xgb_model = xgb.XGBClassifier(
-            max_depth=4, eta=0.3, colsample_bytree=0.1, n_estimators=100, seed=0
+        rf_model = RandomForestClassifier(random_state=42)
+        xgb_model = xgb.XGBClassifier(seed=42)
+
+        # get fitted model in pipeline with SMOTE added
+        xgb_pipe_path = "../models/xgb_pipeline.pickle"
+        xgb_pipeline = self.save_load_pipeline(
+            X_train, y_train, xgb_model, xgb_pipe_path
         )
 
-        # fit models with training data
-        rf_model.fit(X_train, y_train)
-        xgb_model.fit(X_train, y_train)
+        # get fitted model in pipeline with SMOTE added
+        rf_pipe_path = "../models/rf_pipeline.pickle"
+        rf_pipeline = self.save_load_pipeline(X_train, y_train, rf_model, rf_pipe_path)
 
-        # RandomForest model performance
-        rf_acc = self.performance(rf_model, X_train, X_test, y_test)
-        print(f"Test RandomForest Accuracy: {rf_acc}")
+        # xgb classification report
+        xgb_y_hat = xgb_pipeline.predict(X_test)
+        print("XGBoost Classification Report")
+        print(classification_report(y_test, xgb_y_hat))
 
-        # XGBoost model performance
-        xgb_acc = self.performance(xgb_model, X_train, X_test, y_test)
-        print(f"Test XGBoost Accuracy: {xgb_acc}")
+        # rf classification report
+        rf_y_hat = rf_pipeline.predict(X_test)
+        print("RandomForest Classification Report")
+        print(classification_report(y_test, rf_y_hat))
 
         # feature importance using RandomForest
-        rf_feat_impt_df = self.feat_importance(rf_model, X_test)
+        rf_feat_impt_df = self.feat_importance(rf_pipeline["model"], X_test)
         print(rf_feat_impt_df)
-        data_path = "../data/rf_feat_impt_df.csv"
-        self.save_data(rf_feat_impt_df, data_path)
 
         # feature importance using XGBoost
-        xgb_feat_impt_df = self.feat_importance(xgb_model, X_test)
+        xgb_feat_impt_df = self.feat_importance(xgb_pipeline["model"], X_test)
         print(xgb_feat_impt_df)
-        data_path = "../data/xgb_feat_impt_df.csv"
-        self.save_data(xgb_feat_impt_df, data_path)
 
         # correlation matrix
         self.corr_matrix(merged_df)
+
+        # evaluate xgb model
+        self.evaluate_model(X, y, xgb_pipeline, xgb_model, "XGBoost")
+
+        # evaluate rf model
+        self.evaluate_model(X, y, rf_pipeline, rf_model, "RandomForest")
 
         return None
 

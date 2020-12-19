@@ -9,3 +9,4 @@ pyLDAvis
 xgboost
 fastai
 category_encoders
+imbalanced-learn
