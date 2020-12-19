@@ -57,14 +57,24 @@ class LabelingModel(object):
         labeled_data_df = labeled_data_df[["link", "target"]]
 
         # merge dataframes
-        merged_df = pd.merge(feat_data_df, labeled_data_df, how="inner", on=["link"])
+        all_merged_df = pd.merge(
+            feat_data_df, labeled_data_df, how="inner", on=["link"]
+        )
+
+        # merged dataframe with just nulls
+        nulls_merged_df = all_merged_df[pd.isnull(all_merged_df["target"])].reset_index(
+            drop=True
+        )
 
         # drop target rows with NaN or missing vals (non-labeled)
-        merged_df = merged_df[pd.notnull(merged_df["target"])].reset_index(drop=True)
+        merged_df = all_merged_df[pd.notnull(all_merged_df["target"])].reset_index(
+            drop=True
+        )
 
         # drop non-used cols for training
         drop_cols = ["no_hr_date", "id", "link", "content", "date", "processed_content"]
         merged_df.drop(drop_cols, axis=1, inplace=True)
+        nulls_merged_df.drop(drop_cols, axis=1, inplace=True)
 
         # encode laebels (0 = -1, 1 = 1, 2 = 1)
         label_encoder = preprocessing.LabelEncoder()
@@ -72,7 +82,7 @@ class LabelingModel(object):
         # transform labels and replace
         merged_df["target"] = label_encoder.fit_transform(merged_df["target"])
 
-        return merged_df
+        return nulls_merged_df, merged_df
 
     def save_data(self, df, path):
         # save data to csv in a folder
@@ -370,11 +380,15 @@ class LabelingModel(object):
         np.random.seed(seed=1)
 
         # create merged dataset with feats and target
-        merged_df = self.merge_data()
+        nulls_merged_df, merged_df = self.merge_data()
 
         # save merged dataset to csv
         data_path = "../data/merged_labeled_feat_tweets.csv"
         self.save_data(merged_df, data_path)
+
+        # save merged null dataset to csv
+        data_path = "../data/merged_nulls_labeled_feat_tweets.csv"
+        self.save_data(nulls_merged_df, data_path)
 
         # final dataset shape before training
         print(f"Dataset:[{merged_df.shape[0]} rows x {merged_df.shape[1]} cols]")
