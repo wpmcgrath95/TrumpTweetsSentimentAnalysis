@@ -30,9 +30,8 @@ from imblearn.under_sampling import RandomUnderSampler
 from sklearn import preprocessing
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
-from sklearn.model_selection import RepeatedStratifiedKFold
-from sklearn.model_selection import cross_validate
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import (RepeatedStratifiedKFold, cross_validate,
+                                     train_test_split)
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
