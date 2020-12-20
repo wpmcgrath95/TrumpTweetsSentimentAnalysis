@@ -91,20 +91,6 @@ class LabelingModel(object):
 
         return None
 
-    def save_load_pipeline(self, X_train, y_train, model, path):
-        # save model
-        model_dir = os.path.join(self.this_dir, path)
-        try:
-            with open(model_dir, "rb") as f:
-                pipeline = cPickle.load(f)
-
-        except FileNotFoundError:
-            with open(model_dir, "wb") as f:
-                pipeline = self.over_sampling_smote(X_train, y_train, model)
-                cPickle.dump(pipeline, f)
-
-        return pipeline
-
     def train_test_split(self, df):
         # train and test split
         # define X = predictors and y = response var
@@ -374,6 +360,20 @@ class LabelingModel(object):
         print(f"{name} ROC-Macro: {np.mean(scores_no_smote['test_roc_auc_ovr'])}")
 
         return None
+
+    def save_load_pipeline(self, X_train, y_train, model, path):
+        # save model
+        model_dir = os.path.join(self.this_dir, path)
+        try:
+            with open(model_dir, "rb") as f:
+                pipeline = cPickle.load(f)
+
+        except FileNotFoundError:
+            with open(model_dir, "wb") as f:
+                pipeline = self.over_sampling_smote(X_train, y_train, model)
+                cPickle.dump(pipeline, f)
+
+        return pipeline
 
     def main(self):
         # set seed
