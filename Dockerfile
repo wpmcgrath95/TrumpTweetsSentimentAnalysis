@@ -20,18 +20,21 @@ RUN pip install --no-cache-dir -U pip wheel setuptools \
 RUN pip3 install --upgrade pip
 RUN pip3 install llvmlite==0.35.0
 RUN pip3 install --compile --no-cache-dir -r requirements.txt
+RUN python3 -m textblob.download_corpora
 
 # Get files to create image and indicate where to put them
-COPY ./data/realdonaldtrump.csv realdonaldtrump.csv
-COPY scripts /scripts
-COPY unit_tests /unit_tests
-COPY python /python
+COPY ./data/realdonaldtrump.csv /data/realdonaldtrump.csv
+COPY ./scripts/code.sh /scripts/code.sh
+COPY ./unit_tests/lda_unit_test.py lda_unit_test.py 
+COPY ./python/ /python/
+
+RUN chmod +x /scripts/code.sh
 
 # Create an unprivileged user
-RUN useradd --system --user-group --shell /sbin/nologin services
+#RUN useradd --system --user-group --shell /sbin/nologin services
 
 # Switch to the unprivileged user
-USER services
+#USER services
 
 # command to run on container start
 CMD ["/scripts/code.sh"]

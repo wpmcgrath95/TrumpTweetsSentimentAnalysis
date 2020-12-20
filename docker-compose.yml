@@ -6,6 +6,8 @@ services:
       dockerfile: Dockerfile
     container_name: code
     volumes:
+      - ./data:/data
+      - ./models:/models
       - ./plots:/plots
       - ./results:/results
     ports:
