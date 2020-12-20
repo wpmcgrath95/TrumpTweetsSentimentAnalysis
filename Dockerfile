@@ -21,7 +21,7 @@ RUN pip3 install --compile --no-cache-dir -r requirements.txt
 COPY realdonaldtrump.csv /data/realdonaldtrump.csv
 COPY scripts /scripts
 COPY unit_tests /unit_tests
-COPY python_files /python_files
+COPY python /python
 
 # Create an unprivileged user
 RUN useradd --system --user-group --shell /sbin/nologin services
@@ -29,5 +29,5 @@ RUN useradd --system --user-group --shell /sbin/nologin services
 # Switch to the unprivileged user
 USER services
 
-# Run image as a container
-CMD ["python", "NBA_ML.py"]
+# command to run on container start
+CMD ["/scripts/code.sh"]

@@ -15,6 +15,7 @@ from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (auc, classification_report, confusion_matrix,
+                             f1_score, precision_score, recall_score,
                              roc_curve)
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, label_binarize
@@ -281,6 +282,30 @@ class ClusterModel(object):
 
         return None
 
+    def perf(self, name, pred, y_test):
+        pca_performance_cols = ["Precision", "Recall", "F1"]
+        pca_performance_df = pd.DataFrame(
+            columns=pca_performance_cols,
+        )
+
+        # for label inbalance
+        prec = precision_score(y_test, pred, average="weighted")
+        recall = recall_score(y_test, pred, average="weighted")
+        f1 = f1_score(y_test, pred, average="weighted")
+
+        pca_performance_df.loc[name] = pd.Series(
+            {
+                "Precision": prec,
+                "Recall": recall,
+                "F1": f1,
+            }
+        )
+
+        perf_dir = os.path.join(self.this_dir, "../plots/pca_perf.csv")
+        pca_performance_df.to_csv(perf_dir, encoding="utf-8", index=False)
+
+        return None
+
     def main(self):
         # set seed
         np.random.seed(1)
@@ -389,6 +414,16 @@ class ClusterModel(object):
 
         # ROC Curve
         self.roc_curve(X_test, y_test, rf_model_pca, "rf_PCA")
+
+        # 35 feats left
+        var_df = pd.DataFrame(
+            pca_model.explained_variance_ratio_, columns=["Var of Prin. Comp."]
+        )
+        var_df["Cum. Sum"] = var_df["Var of Prin. Comp."].cumsum()
+        var_df = var_df[var_df["Cum. Sum"] < 0.95]
+        print(var_df)
+
+        self.perf("RandomForest_PCA", rf_y_hat_pca, y_test)
 
         return None
 

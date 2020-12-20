@@ -1,0 +1,11 @@
+version: "3.8"
+code:
+  container_name: code
+  build:
+    context: .
+    dockerfile: Dockerfile
+  volumes:
+    - ./plots:/plots
+    - ./results:/results
+  networks:
+    - backend
