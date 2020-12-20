@@ -324,7 +324,7 @@ class LabelingModel(object):
         steps = [("o", over), ("u", under), ("model", model)]
         pipeline = Pipeline(steps=steps)
 
-        # fit dataset
+        # fit dataset on train only
         pipeline.fit(X_train, y_train)
 
         # fit dataset
@@ -377,7 +377,7 @@ class LabelingModel(object):
 
     def main(self):
         # set seed
-        np.random.seed(seed=1)
+        np.random.seed(1)
 
         # create merged dataset with feats and target
         nulls_merged_df, merged_df = self.merge_data()

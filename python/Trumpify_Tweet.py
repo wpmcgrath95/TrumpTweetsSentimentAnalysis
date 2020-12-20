@@ -2,8 +2,8 @@ import os
 import sys
 
 import _pickle as cPickle
+import numpy as np
 import pandas as pd
-import PySimpleGUI as sg
 from fastai.text.all import AWD_LSTM, TextDataLoaders, language_model_learner
 
 
@@ -14,34 +14,10 @@ class TrumpifyTweet(object):
         data_dir = os.path.join(self.this_dir, "../data/twitter_data_with_feats.csv")
         self.tweets_df = pd.read_csv(data_dir, sep=",")
 
-    # just make while loop to get multiple answers and get rid of gui
-    def gui(self, model):
-        layout = [
-            [sg.Text("Please enter a Tweet: ")],
-            [sg.Input(key="-INPUT-")],
-            [sg.Text(size=(40, 1), key="-OUTPUT-")],
-            [sg.Button("Ok"), sg.Button("Quit")],
-        ]
-
-        # create the window
-        window = sg.Window("Window Title", layout)
-
-        # display and interact with the window
-        while True:
-            event, values = window.read()
-            # See if user wants to quit or window was closed
-            if event == sg.WINDOW_CLOSED or event == "Quit":
-                break
-            # output a message to the window
-            print(model.predict(values["-INPUT-"], 7))
-            window["-OUTPUT-"].update(model.predict(values["-INPUT-"], 7))
-
-        # finish up by removing from the screen
-        window.close()
-
-        return None
-
     def main(self, input_tweet, num_add_words):
+        # set seed
+        np.random.seed(1)
+
         # getting DataLoader
         dls = TextDataLoaders.from_df(
             self.tweets_df,
@@ -67,7 +43,6 @@ class TrumpifyTweet(object):
 
         # predict sentence
         pred_output = lstm_model.predict(input_tweet, num_add_words)
-        self.gui(lstm_model)
 
         return pred_output
 

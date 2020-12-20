@@ -279,7 +279,7 @@ class LDAGrouping(object):
 
     def main(self):
         # set seed
-        np.random.seed(2)
+        np.random.seed(1)
 
         # preprocess tweets
         self.preprocess_tweets()
