@@ -1,11 +1,12 @@
 version: "3.8"
-code:
-  container_name: code
-  build:
-    context: .
-    dockerfile: Dockerfile
-  volumes:
-    - ./plots:/plots
-    - ./results:/results
-  networks:
-    - backend
+services:
+  mamba:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: code
+    volumes:
+      - ./plots:/plots
+      - ./results:/results
+    ports:
+      - "5000:5000"
