@@ -1,5 +1,5 @@
 # Base Image	
-FROM python:3.8.0
+FROM python:3.8.3
 
 # Port
 ENV PORT 5000
