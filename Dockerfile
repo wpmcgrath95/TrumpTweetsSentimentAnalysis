@@ -1,8 +1,6 @@
 # Base Image	
 FROM python:3.8.0
 
-WORKDIR /code
-
 # Port
 ENV PORT 5000
 
@@ -24,7 +22,7 @@ RUN pip3 install llvmlite==0.35.0
 RUN pip3 install --compile --no-cache-dir -r requirements.txt
 
 # Get files to create image and indicate where to put them
-COPY realdonaldtrump.csv /data/realdonaldtrump.csv
+COPY ./realdonaldtrump.csv ./data/realdonaldtrump.csv
 COPY scripts /scripts
 COPY unit_tests /unit_tests
 COPY python /python
