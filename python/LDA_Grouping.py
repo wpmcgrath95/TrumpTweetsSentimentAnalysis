@@ -22,7 +22,7 @@ from wordcloud import WordCloud
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
-# add unsupervided LDA model to group tweets and add it as a feature
+# add unsupervided LDA model to group tweets and add it as a feat
 class LDAGrouping(object):
     def __init__(self):
         # load the trump tweets directly from repository
