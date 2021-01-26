@@ -7,7 +7,7 @@ import pandas as pd
 from fastai.text.all import AWD_LSTM, TextDataLoaders, language_model_learner
 
 
-# note: deep learning using fastai
+# note: deep learning (LSTM is a RNN) using fastai
 class TrumpifyTweet(object):
     def __init__(self):
         self.this_dir = os.path.dirname(os.path.realpath(__file__))
