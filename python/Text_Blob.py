@@ -48,6 +48,7 @@ import category_encoders as ce
 import numpy as np
 import pandas as pd
 from LDA_Grouping import LDAGrouping
+from scipy.stats import mode
 from textblob import TextBlob
 
 pd.set_option("display.max_columns", None)
@@ -418,7 +419,12 @@ class SentimentOfTweets(object):
             self.tweets_df["num_of_hashtags"].rolling(window=50).mean()
         )
 
-        # feat: most used hashtag in last 3 tweets
+        # feat: most used hashtag in last 3 tweets 
+        self.tweets_df["most_hashtag_last_50_rows"] = (
+            self.tweets_df["num_of_hashtags"]
+            .rolling(window=3)
+            .apply(lambda x: mode(x)[0])
+        )
 
         # feat: most used hashtag in last 5 tweets
 
