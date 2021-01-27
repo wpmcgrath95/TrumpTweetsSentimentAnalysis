@@ -419,18 +419,33 @@ class SentimentOfTweets(object):
             self.tweets_df["num_of_hashtags"].rolling(window=50).mean()
         )
 
-        # feat: most used hashtag in last 3 tweets 
-        self.tweets_df["most_hashtag_last_50_rows"] = (
+        # feat: most used hashtag in last 3 tweets
+        self.tweets_df["most_hashtag_last_3_rows"] = (
             self.tweets_df["num_of_hashtags"]
             .rolling(window=3)
             .apply(lambda x: mode(x)[0])
         )
 
         # feat: most used hashtag in last 5 tweets
+        self.tweets_df["most_hashtag_last_5_rows"] = (
+            self.tweets_df["num_of_hashtags"]
+            .rolling(window=5)
+            .apply(lambda x: mode(x)[0])
+        )
 
         # feat: most used hashtag in last 10 tweets
+        self.tweets_df["most_hashtag_last_10_rows"] = (
+            self.tweets_df["num_of_hashtags"]
+            .rolling(window=10)
+            .apply(lambda x: mode(x)[0])
+        )
 
         # feat: most used hashtag in last 50 tweets
+        self.tweets_df["most_hashtag_last_50_rows"] = (
+            self.tweets_df["num_of_hashtags"]
+            .rolling(window=50)
+            .apply(lambda x: mode(x)[0])
+        )
 
         # feat: unique hashtag count in last 7 days
 
