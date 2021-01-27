@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  mamba:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: code
+    volumes:
+      - ./data:/data
+      - ./models:/models
+      - ./plots:/plots
+      - ./results:/results
+    ports:
+      - "5000:5000"

@@ -6,3 +6,4 @@ jupyterlab
 pip-tools
 pre-commit
 nose
+textblob

@@ -1,4 +1,6 @@
-# Analyzing Tweets Using Sentiment Analysis 
+# Analyzing Trump Tweets Using Sentiment Analysis
+
+# BDA 696 - Fall 2020 Semester
 
 # Setup for developement:
 
