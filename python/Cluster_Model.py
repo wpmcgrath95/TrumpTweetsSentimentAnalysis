@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# BDA 696 Final Project
 # Create by: Will McGrath
+
 import gc
 import os
 import sys
@@ -310,9 +310,9 @@ class ClusterModel(object):
         # set seed
         np.random.seed(1)
 
-        # shape of original CSV with feats
+        # shape of original CSV with feats (CSV_with_feats cols - 5)
         orig_row_len = 43352
-        orig_col_len = 96
+        orig_col_len = 100
         diff_2 = 289
         diff_1 = 120
         diff_0 = 32
@@ -415,7 +415,7 @@ class ClusterModel(object):
         # ROC Curve
         self.roc_curve(X_test, y_test, rf_model_pca, "rf_PCA")
 
-        # 35 feats left
+        # 37 feats left
         var_df = pd.DataFrame(
             pca_model.explained_variance_ratio_, columns=["Var of Prin. Comp."]
         )
