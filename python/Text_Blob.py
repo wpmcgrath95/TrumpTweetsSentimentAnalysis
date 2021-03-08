@@ -390,6 +390,8 @@ class SentimentOfTweets(object):
 
         # feat: most used hashtag in last 50 days
 
+        # feat: unique hashtag count in last 7 days
+
         # merge with main twitter dataframe
         self.tweets_df = pd.merge(
             self.tweets_df, temp_df, how="inner", on=["no_hr_date"]
@@ -445,8 +447,6 @@ class SentimentOfTweets(object):
             .rolling(window=50)
             .apply(lambda x: mode(x)[0])
         )
-
-        # feat: unique hashtag count in last 7 days
 
         # feat: unique hashtag count in last 3 tweets
 
