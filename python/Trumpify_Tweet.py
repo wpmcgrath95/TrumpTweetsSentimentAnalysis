@@ -49,7 +49,7 @@ class TrumpifyTweet(object):
 
 
 if __name__ == "__main__":
-    input_tweet = input("Please enter a Tweet: ")
+    input_tweet = input("Please enter a Tweet or text: ")
     num_add_words = int(
         input("Please enter the number of Trump words you would like to add: ")
     )
