@@ -1,6 +1,16 @@
 # Analyzing Trump Tweets Using Sentiment Analysis
 
-# Setup for developement:
+## Resources
+
+Dataset: https://www.kaggle.com/austinreese/trump-tweets <br />
+Guides (helped me throughout the project):
+
+1. https://towardsdatascience.com/topic-modeling-and-latent-dirichlet-allocation-in-python-9bf156893c24
+2. https://www.kaggle.com/shailaja4247/sentiment-analysis-of-tweets-wordclouds-textblob
+3. https://www.kaggle.com/erikbruin/text-mining-the-clinton-and-trump-election-tweets#header
+4. https://www.kaggle.com/vyombhatia/trump-tweet-generator-fastai/data
+
+## Setup for developement:
 
 - Setup a python 3.x venv (usually in `.venv`)
   - You can run `./scripts/create-venv.sh` to generate one
@@ -13,6 +23,6 @@
 
 `pip-compile --output-file=requirements.dev.txt requirements.dev.in --upgrade`
 
-# Run `pre-commit` locally.
+## Run `pre-commit` locally.
 
 `pre-commit run --all-files`
