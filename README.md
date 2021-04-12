@@ -26,3 +26,7 @@ Guides (helped me throughout the project):
 ## Run `pre-commit` locally.
 
 `pre-commit run --all-files`
+
+## Run Docker
+
+- To run all code for this project please use docker `docker-compose up`
