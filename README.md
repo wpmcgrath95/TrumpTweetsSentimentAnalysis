@@ -29,7 +29,7 @@ Guides (helped me throughout the project):
 
 ## Run Docker
 
-Note: To run all code for this project with the same environment, please use docker
+> Note: To run all code for this project with the same environment, please use docker
 
 - Build docker image `docker-compose build`
 - Then run the docker container `docker-compose up`
