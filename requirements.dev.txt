@@ -53,13 +53,13 @@ idna==2.10
     # via requests
 ipykernel==5.4.2
     # via notebook
+ipython==7.19.0
+    # via ipykernel
 ipython-genutils==0.2.0
     # via
     #   nbformat
     #   notebook
     #   traitlets
-ipython==7.19.0
-    # via ipykernel
 isort[requirements]==5.6.4
     # via -r requirements.dev.in
 jedi==0.17.2
@@ -89,12 +89,12 @@ jupyter-core==4.7.0
     #   nbconvert
     #   nbformat
     #   notebook
+jupyterlab==2.2.10
+    # via -r requirements.dev.in
 jupyterlab-pygments==0.1.2
     # via nbconvert
 jupyterlab-server==1.2.0
     # via jupyterlab
-jupyterlab==2.2.9
-    # via -r requirements.dev.in
 markupsafe==1.1.1
     # via jinja2
 mccabe==0.6.1
@@ -236,4 +236,3 @@ webencodings==0.5.1
 # The following packages are considered to be unsafe in a requirements file:
 # pip
 # setuptools
-
