@@ -61,7 +61,7 @@ class LDAGrouping(object):
             lambda x: re.sub(r"[^\x00-\x7F]+", " ", x)
         )
 
-        # remove beginning, and end whitespaces
+        # remove beginning, and end whitespaces  
         self.tweets_df["content_pro"] = self.tweets_df["content_pro"].map(
             lambda x: re.sub(r"^\s+|\s+$", "", x)
         )
